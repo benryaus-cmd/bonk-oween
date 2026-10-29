@@ -578,9 +578,21 @@ export function drawGhost(
   drawArm(ctx, 'right', pose, { ...opts, palette: costumePalette });
   if (opts.costume && opts.costume !== 'ghost') {
     drawCostume(ctx, pose, opts.costume, p, line);
-    ctx.save(); ctx.translate(pose.lean * 1.4, pose.bobY);
+    ctx.save(); ctx.translate(pose.lean * 1.4, pose.bobY - pose.hemBounce * 1.2);
+    ctx.rotate(pose.rotation * Math.PI / 180);
     ctx.scale(pose.scaleX, pose.scaleY);
-    drawStains(ctx, opts.stains, p, line, pose.walk);
+    // Pigment stays on the head or clothing, even at the outer edge of a
+    // procedurally placed splat. Paper may still hang outside the silhouette.
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, -59, 45, 48, 0, 0, Math.PI * 2);
+    ctx.moveTo(-37, -58);
+    ctx.lineTo(38, -58); ctx.lineTo(53, 73);
+    ctx.quadraticCurveTo(0, 90, -53, 73); ctx.closePath();
+    ctx.clip();
+    drawStains(ctx, opts.stains.filter((s) => s.kind !== 'tp'), p, line, pose.walk);
+    ctx.restore();
+    drawStains(ctx, opts.stains.filter((s) => s.kind === 'tp'), p, line, pose.walk);
     drawBagStrap(ctx, p, line, pose.bagSwing, candy);
     drawBag(ctx, candy, p, line, pose.bagSwing);
     ctx.restore(); ctx.restore();
@@ -703,7 +715,11 @@ export function drawGhost(
   ctx.restore();
 
   // persistent mess from unblocked junk / pumpkins
-  drawStains(ctx, opts.stains.filter((s) => s.y >= -25), p, line, pose.walk);
+  ctx.save();
+  sheetPath(ctx, pose.walk); ctx.clip();
+  drawStains(ctx, opts.stains.filter((s) => s.y >= -25 && s.kind !== 'tp'), p, line, pose.walk);
+  ctx.restore();
+  drawStains(ctx, opts.stains.filter((s) => s.y >= -25 && s.kind === 'tp'), p, line, pose.walk);
   ctx.restore();
 
   // Stray hair and skin reveal a real little kid beneath cut-out eye holes.
@@ -795,7 +811,11 @@ export function drawGhost(
   ctx.translate(pose.lean * 1.4, pose.bobY - pose.hemBounce * 1.2);
   ctx.rotate((pose.rotation * Math.PI) / 180);
   ctx.scale(pose.scaleX, pose.scaleY);
-  drawStains(ctx, opts.stains.filter((s) => s.y < -25), p, line, pose.walk);
+  ctx.save();
+  sheetPath(ctx, pose.walk); ctx.clip();
+  drawStains(ctx, opts.stains.filter((s) => s.y < -25 && s.kind !== 'tp'), p, line, pose.walk);
+  ctx.restore();
+  drawStains(ctx, opts.stains.filter((s) => s.y < -25 && s.kind === 'tp'), p, line, pose.walk);
   ctx.restore();
 
   // sweat drop for guilty moments

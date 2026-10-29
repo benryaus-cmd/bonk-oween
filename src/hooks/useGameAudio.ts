@@ -124,7 +124,8 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
           const now = performance.now();
           if (now - (lastRecordedRef.current[name] ?? -Infinity) < def.cooldown) return;
           lastRecordedRef.current[name] = now;
-          const volume = Math.max(0, Math.min(1, gain * def.defaultGain * s.master * s.sfx));
+          const boost = name === 'babyHitExtra' || name === 'perfectExtra' ? 2 : 1;
+          const volume = Math.max(0, Math.min(1, gain * def.defaultGain * s.master * s.sfx * boost));
           if (volume <= 0.002) return;
           void ensure().then(async () => {
             try {

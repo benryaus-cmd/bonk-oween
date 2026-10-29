@@ -4,7 +4,7 @@ import { buildPalette, type ArtPalette } from '@/art/palette';
 import { StreetDraw } from '@/art/StreetDraw';
 import { ToiletPaperRibbon } from '@/art/ToiletPaperRibbon';
 import { DEFAULT_CONFIG, type GameConfig } from '@/config/defaults';
-import { targetVisual } from '@/game/targetMath';
+import { hitWindows, targetVisual } from '@/game/targetMath';
 import type { CharacterPose } from '@/art/CharacterPose';
 import type { Effects } from '@/art/Effects';
 import type { FlyingItem } from '@/game/PhysicsWorld';
@@ -49,6 +49,7 @@ export class Renderer {
       this.paletteKey = paletteKey;
     }
     const p = this.palette;
+    const windows = hitWindows(cfg.normalWindowMs, cfg.perfectWindowMs);
     this.street.draw(ctx, width, height, scene.clockMs, cfg);
 
     if (scene.meltdown > 0.01) {
@@ -76,7 +77,7 @@ export class Renderer {
 
     for (const t2 of scene.targets) {
       if (t2.resolved && t2.outcome !== 'miss') continue;
-      const v = targetVisual(t2, scene.clockMs);
+      const v = targetVisual(t2, scene.clockMs, windows.normal);
       if (v.alpha <= 0.02) continue;
       if (t2.art === 'tpRoll') {
         ctx.globalAlpha = v.alpha;
@@ -115,13 +116,13 @@ export class Renderer {
       } else if (!t2.resolved) {
         // Approach cue: the ring tightens and turns gold at the slap moment.
         const delta = t2.impactTime - scene.clockMs;
-        const span = cfg.normalWindowMs;
+        const span = windows.normal;
         if (Math.abs(delta) <= span) {
           const closeness = 1 - Math.min(1, Math.abs(delta) / span);
           const urgency = Math.max(0, Math.min(1, v.urgency));
           const throb = urgency * (0.5 + 0.5 * Math.sin(scene.clockMs / 72));
           ctx.globalAlpha = v.alpha * (0.2 + 0.55 * closeness + 0.23 * throb);
-          ctx.strokeStyle = Math.abs(delta) <= cfg.perfectWindowMs ? p.gold : t2.category === 'junk' ? '#FFD9A0' : p.accent;
+          ctx.strokeStyle = Math.abs(delta) <= windows.perfect ? p.gold : t2.category === 'junk' ? '#FFD9A0' : p.accent;
           ctx.lineWidth = 2 + closeness * 2 + throb * 1.4;
           ctx.beginPath();
           ctx.arc(0, 0, radius * (1.2 + (1 - closeness) * 0.65 + throb * 0.08), 0, Math.PI * 2);

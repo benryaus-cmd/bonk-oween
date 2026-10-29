@@ -9,7 +9,7 @@ import { PhysicsWorld } from '@/game/PhysicsWorld';
 import { clamp } from '@/game/rng';
 import { applyScore, bagMultiplier, babyPenalty, pointsForHit } from '@/game/Scoring';
 import { SpawnDirector } from '@/game/SpawnDirector';
-import { targetVisual } from '@/game/targetMath';
+import { hitWindows, MISS_LINGER_MS, targetVisual } from '@/game/targetMath';
 import type {
   CostumeKind,
   GameEvent,
@@ -187,12 +187,13 @@ export class Game {
     }
     if (this.phase !== 'PLAYING') return;
     const now = this.clockMs;
+    const window = hitWindows(this.cfg.normalWindowMs, this.cfg.perfectWindowMs);
     let best: Target | null = null;
     let bestDelta = Number.POSITIVE_INFINITY;
     for (const t of this.targets) {
       if (t.resolved || t.side !== side) continue;
       const d = now - t.impactTime;
-      if (Math.abs(d) <= this.cfg.normalWindowMs && Math.abs(d) < Math.abs(bestDelta)) {
+      if (Math.abs(d) <= window.normal && Math.abs(d) < Math.abs(bestDelta)) {
         best = t;
         bestDelta = d;
       }
@@ -204,7 +205,7 @@ export class Game {
       return;
     }
     const quality: HitQuality =
-      Math.abs(now - best.impactTime) <= this.cfg.perfectWindowMs ? 'perfect' : 'normal';
+      Math.abs(now - best.impactTime) <= window.perfect ? 'perfect' : 'normal';
     this.resolve(best, quality, side);
   }
 
@@ -389,12 +390,13 @@ export class Game {
 
   /** Ghost eye-tracking + wind-up while objects approach. */
   private steerCharacter(): void {
+    const window = hitWindows(this.cfg.normalWindowMs, this.cfg.perfectWindowMs);
     let closest: Target | null = null;
     let closestDelta = Number.POSITIVE_INFINITY;
     for (const t of this.targets) {
       if (t.resolved) continue;
       const d = t.impactTime - this.clockMs;
-      if (d < -this.cfg.normalWindowMs) continue;
+      if (d < -window.normal) continue;
       if (Math.abs(d) < closestDelta) {
         closestDelta = Math.abs(d);
         closest = t;
@@ -419,6 +421,7 @@ export class Game {
 
   private advanceTargets(): void {
     const now = this.clockMs;
+    const window = hitWindows(this.cfg.normalWindowMs, this.cfg.perfectWindowMs);
     const pending = this.targets.filter((t) => !t.resolved).length;
     this.director.update(
       now,
@@ -440,7 +443,7 @@ export class Game {
 
     for (const t of this.targets) {
       if (t.resolved) continue;
-      if (now > t.impactTime + this.cfg.normalWindowMs) {
+      if (now > t.impactTime + window.normal) {
         t.resolved = true;
         t.outcome = 'miss';
         t.resolvedAt = now;
@@ -448,7 +451,8 @@ export class Game {
         this.handleUnblocked(t);
       }
     }
-    this.targets = this.targets.filter((t) => !t.resolved || now - t.resolvedAt < 460);
+    this.targets = this.targets.filter((t) => !t.resolved || now - t.resolvedAt <
+      (t.outcome === 'miss' ? MISS_LINGER_MS : 460));
   }
 
   /** Silent, non-scoring attract play: shows the thumb action without teaching text. */
@@ -456,7 +460,7 @@ export class Game {
     const target = this.targets.find((t) => !t.resolved && t.category !== 'baby' &&
       Math.abs(t.impactTime - this.clockMs) < 38);
     if (!target) return;
-    const visual = targetVisual(target, this.clockMs);
+    const visual = targetVisual(target, this.clockMs, hitWindows(this.cfg.normalWindowMs, this.cfg.perfectWindowMs).normal);
     target.resolved = true;
     target.outcome = 'hit';
     target.resolvedAt = this.clockMs;
@@ -518,7 +522,7 @@ export class Game {
 
   /** An object reached the ghost without being intercepted. */
   private handleUnblocked(t: Target): void {
-    const p = targetVisual(t, this.clockMs);
+    const p = targetVisual(t, this.clockMs, hitWindows(this.cfg.normalWindowMs, this.cfg.perfectWindowMs).normal);
     // The baby is the object you must NOT slap: letting it pass is a dodge.
     if (t.category === 'baby') {
       this.effects.floater(p.x, p.y - 30, 'PHEW', '#FFFDD0', 18);
@@ -564,7 +568,7 @@ export class Game {
 
   private resolve(t: Target, quality: HitQuality, side: Side): void {
     const now = this.clockMs;
-    const visual = targetVisual(t, now);
+    const visual = targetVisual(t, now, hitWindows(this.cfg.normalWindowMs, this.cfg.perfectWindowMs).normal);
     const contact = {
       x: (visual.x - this.layout.centerX) / this.layout.charScale,
       y: (visual.y - this.layout.centerY) / this.layout.charScale,
