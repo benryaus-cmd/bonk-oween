@@ -16,7 +16,7 @@ const BASE_MS: Record<HapticKind, number> = {
  */
 export function haptic(kind: HapticKind, enabled: boolean, intensity: number): void {
   if (!enabled || intensity <= 0.02) return;
-  const ms = Math.round(BASE_MS[kind] * intensity);
+  const ms = Math.min(100, Math.round(BASE_MS[kind] * intensity));
   if (ms <= 0) return;
   try {
     vibrate(ms);

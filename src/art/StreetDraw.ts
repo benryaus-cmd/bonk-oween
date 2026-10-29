@@ -91,8 +91,6 @@ export class StreetDraw {
     hg.fillStyle = '#342041'; hg.fillRect(64, 108, 28, 47);
     hg.fillStyle = '#EBC380'; hg.beginPath(); hg.arc(84, 132, 2, 0, Math.PI * 2); hg.fill();
     hg.fillStyle = '#4D334A'; hg.fillRect(31, 118, 5, 39); hg.fillRect(116, 118, 5, 39);
-    hg.fillStyle = '#E2762C'; hg.beginPath(); hg.ellipse(26, 151, 10, 8, 0, 0, Math.PI * 2); hg.fill();
-    hg.fillStyle = '#421C13'; hg.fillRect(24, 140, 3, 5);
     this.house = house;
   }
 
@@ -101,18 +99,8 @@ export class StreetDraw {
     if (key !== this.key || !this.background) { this.build(w, h, cfg); this.key = key; }
     if (this.background) ctx.drawImage(this.background, 0, 0, w, h);
     const phase = timeMs / 1000 * cfg.backgroundAnimationSpeed * (cfg.reducedMotion ? 0.32 : 1) * 0.16;
-    // A little moving air behind the houses adds depth without distracting
-    // from the objects crossing the playfield.
+    // A couple of distant bats stay behind the targets and do not obscure play.
     ctx.save();
-    ctx.fillStyle = '#C6A8D5';
-    for (let i = 0; i < 3; i++) {
-      const drift = Math.sin(phase * 1.2 + i * 2.4) * w * 0.07;
-      ctx.globalAlpha = 0.035 + i * 0.012;
-      ctx.beginPath();
-      ctx.ellipse(w * (0.16 + i * 0.34) + drift, this.horizon + 15 + i * 13,
-        w * (0.23 + i * 0.035), 9 + i * 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.strokeStyle = '#130D23';
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
@@ -161,11 +149,21 @@ export class StreetDraw {
         const x = w / 2 + side * (edge + scale * (82 + (i % 3) * 8));
         ctx.save(); ctx.globalAlpha = fade; ctx.translate(x, y); ctx.scale(side * scale, scale);
         ctx.drawImage(this.house, -72, -156, 144, 166); ctx.restore();
-        // Every row has a pair of trick-or-treaters at different sidewalk
-        // offsets. They stay visible all the way to the lower edge.
+        // Porch pumpkins and walkers get separate, stable offsets on each side.
+        // Recomputing the same offsets from row/side keeps them from jittering.
+        const seed = i * 31 + (side < 0 ? 7 : 19);
+        const pumpkinX = x - side * scale * (46 + (seed % 5 - 2) * 5);
+        const pumpkinY = y + scale * (-5 + (seed % 7 - 3) * 3);
+        ctx.save(); ctx.globalAlpha = fade;
+        ctx.fillStyle = '#E2762C'; ctx.beginPath();
+        ctx.ellipse(pumpkinX, pumpkinY, 10 * scale, 8 * scale, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#421C13'; ctx.fillRect(pumpkinX - 1.5 * scale, pumpkinY - 11 * scale, 3 * scale, 5 * scale);
+        ctx.restore();
+        if (seed % 5 === 0) continue; // Some porches are empty; the street is not a parade formation.
         const k = 0.13 + depth * 0.82;
-        const px = w / 2 + side * (edge + (15 + (i % 2) * 16) * k);
-        ctx.save(); ctx.globalAlpha = fade; ctx.translate(px, y + 2); ctx.scale(k, k);
+        const px = w / 2 + side * (edge + (15 + seed % 3 * 12) * k);
+        const personY = y + 2 + (seed % 7 - 3) * 8 * k;
+        ctx.save(); ctx.globalAlpha = fade; ctx.translate(px, personY); ctx.scale(k, k);
         ctx.fillStyle = 'rgba(5,3,13,0.28)'; ctx.beginPath(); ctx.ellipse(0, 3, 17, 5, 0, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = (i + side) % 3 === 0 ? '#6B4D8F' : '#342B52';
         ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-7, -31); ctx.lineTo(7, -31); ctx.lineTo(10, 0); ctx.fill();

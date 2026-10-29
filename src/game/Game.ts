@@ -669,7 +669,7 @@ export class Game {
       this.effects.addFlash('#FF2D55', 0.6);
       this.effects.addShake(this.cfg.shakeStrength * 5);
       this.hitStop = this.cfg.hitStopMs;
-      this.events.push({ type: 'BABY_HIT', side, x: visual.x, y: visual.y });
+      this.events.push({ type: 'BABY_HIT', side, x: visual.x, y: visual.y, droppedCandy: dropped });
       if (dropped > 0) this.events.push({ type: 'BAG_DROPPED', candy: dropped });
       return;
     }

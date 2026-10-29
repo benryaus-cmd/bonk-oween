@@ -82,7 +82,7 @@ export type GameEvent =
   | { type: 'JUNK_DEFLECTED'; side: Side; x: number; y: number; points: number }
   | { type: 'PUMPKIN_SMASHED'; side: Side; x: number; y: number; points: number; candy: number }
   | { type: 'BABY_INCOMING' }
-  | { type: 'BABY_HIT'; side: Side; x: number; y: number }
+  | { type: 'BABY_HIT'; side: Side; x: number; y: number; droppedCandy: number }
   | { type: 'BAG_DROPPED'; candy: number }
   | { type: 'BABY_DODGED' }
   | { type: 'MISS'; side: Side; x: number; y: number; category: TargetCategory }

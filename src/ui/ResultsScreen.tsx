@@ -86,7 +86,7 @@ const ResultsScreen = ({
     revealTimer.current = window.setTimeout(() => {
       setShowAwardReason(false);
       revealTimer.current = null;
-    }, 1500);
+    }, 2200);
   };
 
   useEffect(() => () => {

@@ -135,8 +135,8 @@ export interface GameConfig {
 export const DEFAULT_CONFIG: GameConfig = {
   roundDuration: 45,
   meltdownStartTime: 40,
-  initialSpawnInterval: 0.79,
-  minimumSpawnInterval: 0.35,
+  initialSpawnInterval: 0.72,
+  minimumSpawnInterval: 0.32,
   spawnAcceleration: 1.4,
   travelDuration: 1.25,
   minimumTravelDuration: 0.85,

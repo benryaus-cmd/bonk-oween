@@ -6,6 +6,7 @@ import { haptic } from '@/audio/haptics';
 import { useGameAudio } from '@/hooks/useGameAudio';
 import { useGameLoop, type GameLoopContext } from '@/hooks/useGameLoop';
 import { isRankedConfig } from '@/game/eligibility';
+import { bagMultiplier } from '@/game/Scoring';
 import { computeLayout, Game } from '@/game/Game';
 import { sendScorePlaceholder, type ScoreSendPayload } from '@/game/scoreSend';
 import { loadEarnedAwards, rememberAward } from '@/game/awardCollection';
@@ -163,27 +164,29 @@ const GameScreen = ({
 
   const handleEvents = (events: GameEvent[]) => {
     const cfg = configRef.current;
+    const streakFeel = (candy: number) => Math.min(1, Math.max(0, (bagMultiplier(candy, cfg) - 1) / 1.8));
+    const pickupFeel = (candy: number) => cfg.hapticIntensity * (1 + 0.3 * streakFeel(candy));
     for (const ev of events) {
       switch (ev.type) {
         case 'CANDY_COLLECTED':
           audio.playSfx(ev.perfect ? 'slapPerfect' : 'slapHard', cfg.normalHitVolume);
           audio.playSfx('candyPop', cfg.normalHitVolume);
           if (ev.perfect) audio.playSfx('perfectExtra', cfg.perfectHitVolume);
-          haptic(ev.perfect ? 'perfect' : 'hit', cfg.hapticsEnabled, cfg.hapticIntensity);
+          haptic(ev.perfect ? 'perfect' : 'hit', cfg.hapticsEnabled, pickupFeel(ev.candy));
           if (ev.candy > 0 && ev.candy % 5 === 0) audio.playSfx('comboUp', cfg.comboVolume);
           break;
         case 'JUNK_DEFLECTED':
           audio.playSfx('slapSoft', cfg.normalHitVolume);
-          haptic('hit', cfg.hapticsEnabled, cfg.hapticIntensity);
+          haptic('hit', cfg.hapticsEnabled, pickupFeel(gameRef.current?.hud.candy ?? 0));
           break;
         case 'PUMPKIN_SMASHED':
           audio.playSfx('goldenHit', cfg.goldenHitVolume);
-          haptic('golden', cfg.hapticsEnabled, cfg.hapticIntensity);
+          haptic('golden', cfg.hapticsEnabled, pickupFeel(ev.candy));
           break;
         case 'BABY_HIT':
           audio.playSfx('babyHit', cfg.mistakeVolume);
           audio.playSfx('babyHitExtra', cfg.mistakeVolume);
-          haptic('mistake', cfg.hapticsEnabled, cfg.hapticIntensity);
+          haptic('mistake', cfg.hapticsEnabled, cfg.hapticIntensity * (1 + 1.1 * streakFeel(ev.droppedCandy)));
           break;
         case 'BABY_INCOMING':
           audio.playSfx('babyIncoming');
