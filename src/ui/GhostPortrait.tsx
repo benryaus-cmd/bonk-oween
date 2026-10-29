@@ -53,7 +53,7 @@ const GhostPortrait = ({ cfg, candy, stains, costume, width, height }: GhostPort
     });
   }, [cfg, candy, stains, costume, width, height]);
 
-  return <canvas ref={ref} style={{ width, height }} aria-hidden />;
+  return <canvas ref={ref} style={{ width, height: 'auto', maxWidth: '100%', aspectRatio: `${width} / ${height}` }} aria-hidden />;
 };
 
 export default GhostPortrait;

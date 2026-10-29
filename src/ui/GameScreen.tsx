@@ -367,7 +367,8 @@ const GameScreen = ({
       />
 
       {!entered && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-[#170B29] text-center text-[#FFFDD0]" role="status" aria-live="polite">
+        <div className="absolute inset-0 z-50 flex overflow-y-auto bg-[#170B29] px-3 py-3 text-center text-[#FFFDD0]" role="status" aria-live="polite">
+          <div className="m-auto flex max-w-full flex-col items-center gap-3">
           <GhostPortrait cfg={config} candy={0} stains={[]} costume="ghost" width={148} height={164} />
           <div className="text-xl font-black uppercase tracking-[0.16em]">Packing the bag</div>
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#E7C790]">
@@ -383,6 +384,7 @@ const GameScreen = ({
               setEntered(true);
             }}>Enter the street</button>
           )}
+          </div>
         </div>
       )}
       {entered && assets.failures > 0 && hud.phase === 'READY' && (
@@ -410,6 +412,7 @@ const GameScreen = ({
         comboFontSize={config.comboFontSize}
         buttonScale={config.buttonScale}
         motionIntensity={config.uiAnimationIntensity}
+        containerWidth={size.w}
         onToggleMute={toggleMute}
         onOpenSettings={() => {
           audio.playSfx('uiTap');
@@ -426,7 +429,7 @@ const GameScreen = ({
       />
 
       {hud.phase === 'READY' && !settingsOpen && (
-        <div className="pointer-events-none absolute inset-x-3 top-[14%] z-20 rounded-2xl border border-[#C38BFF]/40 bg-[#190A2D]/75 px-2 py-2 shadow-lg">
+        <div className="bonk-ready-stickers pointer-events-none absolute inset-x-3 z-20 mx-auto max-w-[440px] rounded-2xl border border-[#C38BFF]/40 bg-[#190A2D]/75 px-2 py-2 shadow-lg">
           <div className="mb-1 text-center text-[9px] font-black uppercase tracking-[0.18em] text-[#FFE099]">Street stickers · {earnedAwards.length}/{AWARDS.length}</div>
           <div className="grid grid-cols-4 gap-1">
             {AWARDS.map((award) => {
@@ -441,11 +444,11 @@ const GameScreen = ({
       )}
 
       {hud.phase === 'READY' && !settingsOpen && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-[7%] z-20 flex flex-col items-center gap-1">
+        <div className="bonk-ready-hints pointer-events-none absolute inset-x-0 z-20 flex flex-col items-center gap-1 px-2 text-center">
           <div className="bonk-pulse rounded-full bg-black/50 px-4 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#FFFDD0]">
             Tap to start
           </div>
-          <div className="rounded-full bg-black/40 px-3 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-[#FFD6A0]">
+          <div className="bonk-ready-instructions max-w-full rounded-full bg-black/40 px-3 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-[#FFD6A0]">
             Candy in the bag. Junk stays out. Babies are off limits.
           </div>
           <div className="flex w-full items-center justify-between px-4">

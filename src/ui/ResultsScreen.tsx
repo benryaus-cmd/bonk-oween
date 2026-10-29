@@ -154,17 +154,17 @@ const ResultsScreen = ({
   return (
     <div
       ref={rootRef}
-      className="absolute inset-0 z-30 flex items-center justify-center px-4"
+      className="absolute inset-0 z-30 flex min-h-0 items-center justify-center px-3 py-2"
       style={{ background: 'rgba(9,2,20,0.78)' }}
     >
       <div
         ref={cardRef}
-        className="bonk-scroll relative w-full max-w-[330px] rounded-[26px] px-5 pb-5 pt-5 text-center"
+        className="bonk-scroll relative w-full max-w-[330px] min-w-0 rounded-[26px] px-5 pb-5 pt-5 text-center"
         style={{
           background: 'linear-gradient(180deg,#3a1566,#1d0733)',
           border: '3px solid #2E0854',
           boxShadow: '0 18px 40px rgba(4,0,14,0.65), inset 0 1px 0 rgba(255,255,255,0.12)',
-          maxHeight: '92%',
+          maxHeight: '100%',
         }}
       >
         <button type="button" aria-label={`Why did I get ${tally.award.title}?`} onClick={revealAward}

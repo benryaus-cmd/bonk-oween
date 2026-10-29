@@ -22,6 +22,7 @@ interface GameHUDProps {
   comboFontSize: number;
   buttonScale: number;
   motionIntensity: number;
+  containerWidth: number;
   onToggleMute: () => void;
   onOpenSettings: () => void;
 }
@@ -45,6 +46,7 @@ const GameHUD = ({
   comboFontSize,
   buttonScale,
   motionIntensity,
+  containerWidth,
   onToggleMute,
   onOpenSettings,
 }: GameHUDProps) => {
@@ -102,14 +104,14 @@ const GameHUD = ({
       style={{ opacity: hidden ? 0 : 1, transition: 'opacity 240ms ease' }}
     >
       <div
-        className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 px-3"
+        className="absolute inset-x-0 top-0 mx-auto flex w-full max-w-[680px] items-start justify-between gap-2 px-3"
         style={{
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)',
-          transform: `scale(${hudScale})`,
+          transform: `scale(${Math.min(hudScale, Math.max(0.72, containerWidth / 400))})`,
           transformOrigin: 'top center',
         }}
       >
-        <div className="bonk-hud-panel rounded-2xl px-3 py-1.5">
+          <div className="bonk-hud-panel min-w-0 rounded-2xl px-3 py-1.5">
           <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#B7A6D6]">
             Score
           </div>
@@ -157,8 +159,8 @@ const GameHUD = ({
         </div>
 
         <div
-          className="flex items-center gap-2"
-          style={{ transform: `scale(${buttonScale})`, transformOrigin: 'top right' }}
+          className="flex shrink-0 items-center gap-2"
+          style={{ transform: `scale(${Math.min(buttonScale, Math.max(0.72, containerWidth / 400))})`, transformOrigin: 'top right' }}
         >
           <button
             type="button"
@@ -196,7 +198,7 @@ const GameHUD = ({
       )}
 
       {showMultiplier && !hidden && (
-        <div className="absolute inset-x-0 bottom-[14%] flex justify-center">
+        <div className="bonk-multiplier-badge absolute inset-x-0 flex justify-center">
           <div ref={multiplierRef} className="rounded-2xl border-2 border-[#FFD700]/70 bg-[#240A42]/85 px-4 py-1.5 text-center shadow-[0_4px_0_#170528,0_0_18px_#FFD70044]">
             <div className="text-[8px] font-black uppercase leading-none tracking-[0.2em] text-[#FF9EC4]">{candy} candy in bag</div>
             <div className="text-[19px] font-black leading-none tabular-nums text-[#FFD700]" style={{ textShadow: '0 2px 0 #2E0854' }}>
@@ -207,7 +209,7 @@ const GameHUD = ({
       )}
 
       {meltdown && !hidden && (
-        <div className="absolute inset-x-0 bottom-[9%] flex justify-center">
+        <div className="bonk-meltdown-badge absolute inset-x-0 flex justify-center">
           <div className="rounded-full border border-[#FF7518]/70 bg-black/55 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#FFB347]">
             Final meltdown
           </div>

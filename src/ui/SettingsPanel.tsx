@@ -165,8 +165,8 @@ const SettingsPanel = ({
       style={{ background: 'rgba(7,1,16,0.84)' }}
     >
       <div
-        className="bonk-hud-panel flex max-h-[90%] w-full flex-col rounded-t-[26px]"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+        className="bonk-hud-panel bonk-settings mx-auto flex min-h-0 w-full max-w-[620px] flex-col overflow-y-auto rounded-t-[26px]"
+        style={{ maxHeight: 'min(92%, 720px)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
       >
         <div className="flex items-center justify-between px-4 pb-2 pt-3">
           <div>

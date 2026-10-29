@@ -8,12 +8,26 @@
 }
 
 .bonk-root {
+  container-type: size;
   font-family: ui-rounded, "SF Pro Rounded", "Trebuchet MS", system-ui, -apple-system, sans-serif;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
   overscroll-behavior: none;
+}
+
+.bonk-ready-stickers { top: max(92px, 14%); }
+.bonk-ready-hints { bottom: max(8px, 5%); }
+.bonk-multiplier-badge { bottom: max(62px, 14%); }
+.bonk-meltdown-badge { bottom: max(12px, 6%); }
+
+@container (max-height: 480px) {
+  .bonk-ready-stickers { top: 84px; padding-top: 4px; padding-bottom: 4px; }
+  .bonk-ready-stickers .grid > div { min-height: 26px; }
+  .bonk-ready-hints { bottom: 6px; }
+  .bonk-ready-instructions { display: none; }
+  .bonk-settings { padding-bottom: 4px !important; }
 }
 
 .bonk-hud-panel {
