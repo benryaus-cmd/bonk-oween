@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "repository": "benryaus-cmd/bonk-oween",
+  "sourceCommit": "6851ed7f58704d47809abc841e766cb5f4c8eaac",
+  "sourceTreeSha": "82d8a7fd37855ac6e23bb745c819a428630bf963",
+  "baseline": "project-files (4)(2).zip",
+  "mode": "one-time-direct-path-update",
+  "files": [
+    {
+      "destination": "src/App.tsx",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/App.tsx",
+      "size": 1210,
+      "sha256": "573e768b863f4bf9e760c978ecf1b7d1c50b1bda5541aa64c47a92d94451d7ea",
+      "change": "replace"
+    },
+    {
+      "destination": "src/art/CharacterDraw.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/CharacterDraw.ts",
+      "size": 27229,
+      "sha256": "0200b6de957523b996f5a55af1d3cc541ae888b453871710e5f8ed8881a5e73a",
+      "change": "replace"
+    },
+    {
+      "destination": "src/art/CharacterMotion.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/CharacterMotion.ts",
+      "size": 13969,
+      "sha256": "634ad85b7f16b204381854d0b010597b648cfa95190a123fa3e4d46a3793b297",
+      "change": "replace"
+    },
+    {
+      "destination": "src/art/CharacterPose.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/CharacterPose.ts",
+      "size": 2832,
+      "sha256": "1f818b6cecb70567341ea95ec71e547784a9cb8cca0227966ba57942ca302172",
+      "change": "replace"
+    },
+    {
+      "destination": "src/art/CostumeDraw.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/CostumeDraw.ts",
+      "size": 4370,
+      "sha256": "a178f087cae04e255e36e980b7bc6bf8a0ff50b698c58768d8705bfd548b3e6e",
+      "change": "new"
+    },
+    {
+      "destination": "src/art/Effects.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/Effects.ts",
+      "size": 11272,
+      "sha256": "0caa6f7b93ae265055b66b503d34d15ec96423da916e5fe0a48f642bbfa3942e",
+      "change": "replace"
+    },
+    {
+      "destination": "src/art/ObjectsDraw.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/ObjectsDraw.ts",
+      "size": 13805,
+      "sha256": "bf09e8a966a86f01955336c35664d6fa5ea58ac045aa55d50d3fd8ab3298ab58",
+      "change": "replace"
+    },
+    {
+      "destination": "src/art/Renderer.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/Renderer.ts",
+      "size": 7876,
+      "sha256": "1976a325dc2de4c3827e6316413294fec3c90e070c830ae2777138a88ab384cb",
+      "change": "replace"
+    },
+    {
+      "destination": "src/art/StreetDraw.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/StreetDraw.ts",
+      "size": 9744,
+      "sha256": "9a19e69ee456b9b39edbb1da87156f7117a79ea8b650652726610362efb629cb",
+      "change": "new"
+    },
+    {
+      "destination": "src/art/ToiletPaperRibbon.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/art/ToiletPaperRibbon.ts",
+      "size": 3871,
+      "sha256": "14299bb4bcd78dc5287f070aa0e4e4238a69defbf8f29655e7028d906279c505",
+      "change": "new"
+    },
+    {
+      "destination": "src/audio/AssetPreload.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/audio/AssetPreload.ts",
+      "size": 1589,
+      "sha256": "5c1abdf801aa0d53e81243748ef4919ba35f46535b81669688f9a674cc511dab",
+      "change": "new"
+    },
+    {
+      "destination": "src/audio/CrossfadeMusic.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/audio/CrossfadeMusic.ts",
+      "size": 2788,
+      "sha256": "6febda692b2f356496e1718a6c4582999d1c58a8e5c3b14fd2d493c8131671a3",
+      "change": "new"
+    },
+    {
+      "destination": "src/audio/haptics.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/audio/haptics.ts",
+      "size": 708,
+      "sha256": "d79b98eec84d185671edf17a1e789a183f5666ecf15c1f622c4d6fa725a00227",
+      "change": "replace"
+    },
+    {
+      "destination": "src/audio/manifest.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/audio/manifest.ts",
+      "size": 4471,
+      "sha256": "044341e0dd3f5beb5d3928068f5a3fb3070e68f78a67fd80b6a41228347ab117",
+      "change": "replace"
+    },
+    {
+      "destination": "src/config/defaults.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/config/defaults.ts",
+      "size": 13045,
+      "sha256": "c3af5b90b8923044f53895b7daefc5eb2ad04f9871dd4c1ebabeb83371a1966a",
+      "change": "replace"
+    },
+    {
+      "destination": "src/config/tweaksConfig.json",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/config/tweaksConfig.json",
+      "size": 31500,
+      "sha256": "4795e31f04cdc7974f51dee7ee5a7056e21aa89e04a9664529e8e6b8b13a0a98",
+      "change": "replace"
+    },
+    {
+      "destination": "src/game/Game.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/game/Game.ts",
+      "size": 28804,
+      "sha256": "e69bd75d1203d49b9898e75a7015b2d86177fc92ff82de4f51b2331d7a0cfe83",
+      "change": "replace"
+    },
+    {
+      "destination": "src/game/Scoring.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/game/Scoring.ts",
+      "size": 4886,
+      "sha256": "cc18995b4e8c927eff0e69f89c6d1c531f1af88c7a6f86226ef9e589c158d5f5",
+      "change": "replace"
+    },
+    {
+      "destination": "src/game/SpawnDirector.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/game/SpawnDirector.ts",
+      "size": 7558,
+      "sha256": "13e8e7168d726a8aa38af9e478e810c6d9653b51bbd9d3dd87fc6127bcca7160",
+      "change": "replace"
+    },
+    {
+      "destination": "src/game/awardCollection.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/game/awardCollection.ts",
+      "size": 722,
+      "sha256": "e0d4c62fff1a3a9929e4089f42f7d3d689b564a907ca0644a06616f4403b0a32",
+      "change": "new"
+    },
+    {
+      "destination": "src/game/scoreSend.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/game/scoreSend.ts",
+      "size": 1003,
+      "sha256": "c40c42b61d8c89a736e5788436a55a1765a87a462c7733d93d7f6128b92ab2bc",
+      "change": "replace"
+    },
+    {
+      "destination": "src/game/targetMath.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/game/targetMath.ts",
+      "size": 2079,
+      "sha256": "1f7e8837f1ee0c56d733eb4914ebc31c9405ac7675a7bca9a556519c7643a767",
+      "change": "replace"
+    },
+    {
+      "destination": "src/game/types.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/game/types.ts",
+      "size": 3352,
+      "sha256": "8a305b7ee2bd92bad2ecec135e722858a1729898c09d14c22a331dd2f8ffbe77",
+      "change": "replace"
+    },
+    {
+      "destination": "src/hooks/useGameAudio.ts",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/hooks/useGameAudio.ts",
+      "size": 7957,
+      "sha256": "9e5d3650cd5ced1c40d35f597cb1d69f9a2e2f33df666087aa9da958713de35e",
+      "change": "replace"
+    },
+    {
+      "destination": "src/ui/AwardSticker.tsx",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/ui/AwardSticker.tsx",
+      "size": 1939,
+      "sha256": "5497e30e5053f923935f16c865e095b280a820f67ff40faa882eb90cb2b46fa8",
+      "change": "new"
+    },
+    {
+      "destination": "src/ui/CaptionLayer.tsx",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/ui/CaptionLayer.tsx",
+      "size": 2009,
+      "sha256": "59c00e5738879d0f87ebf1407f6175cadc3aad2e84e182c2dcfb8fd0f75b909b",
+      "change": "replace"
+    },
+    {
+      "destination": "src/ui/GameHUD.tsx",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/ui/GameHUD.tsx",
+      "size": 7654,
+      "sha256": "92a3e57f9c98bff874f696827a0486126a7222da0566db4dbba515b955b615ad",
+      "change": "replace"
+    },
+    {
+      "destination": "src/ui/GameScreen.tsx",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/ui/GameScreen.tsx",
+      "size": 18942,
+      "sha256": "ed9e30dd58a4f31945e819247e327b4d60be74f0f864663d089a57695a7b0b3d",
+      "change": "replace"
+    },
+    {
+      "destination": "src/ui/GhostPortrait.tsx",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/ui/GhostPortrait.tsx",
+      "size": 1811,
+      "sha256": "9ceb51b053138a9cd0cb76cb04aeca9f53d3700daf72bc8c4fdb42c4bd82abb8",
+      "change": "replace"
+    },
+    {
+      "destination": "src/ui/ResultsScreen.tsx",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/ui/ResultsScreen.tsx",
+      "size": 11828,
+      "sha256": "872a415ca744de1647a36fe3a4dd2bc912b14a67d64ec3cbd4d844988f71008e",
+      "change": "replace"
+    },
+    {
+      "destination": "src/ui/SettingsPanel.tsx",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/ui/SettingsPanel.tsx",
+      "size": 9831,
+      "sha256": "38be972ec412f89529454c7de342528297cbec2b911c39d087186bb28e900d56",
+      "change": "replace"
+    },
+    {
+      "destination": "src/ui/ui.css",
+      "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/ui/ui.css",
+      "size": 3897,
+      "sha256": "75786765a22ece2aba9ca1435fbdbdc0ad7cba90785c854b7bc80513f813b58b",
+      "change": "replace"
+    }
+  ],
+  "assetConfigUpdate": {
+    "destination": "src/config/assets.json",
+    "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/config/assets.json",
+    "size": 600,
+    "sha256": "acf1975df8343889ed6126bfbb23db7b8aee3c2d22694a11a2d71514d8efa471",
+    "strategy": "merge-json-object",
+    "keys": [
+      "AUDIO_BGM",
+      "AUDIO_MENU_BGM",
+      "AUDIO_BABY_INCOMING",
+      "AUDIO_BABY_HIT",
+      "AUDIO_BABY_HIT_EXTRA",
+      "AUDIO_PERFECT_EXTRA",
+      "AUDIO_CANDY_POP"
+    ]
+  },
+  "obsoleteGameFiles": [],
+  "protectedPaths": [
+    "vite.config.ts",
+    "vite.config.js",
+    "vite.config.mts",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "tsconfig.json",
+    "tsconfig.app.json",
+    "tsconfig.node.json",
+    "eslint.config.js",
+    "index.html",
+    "src/main.tsx",
+    "src/config/assets.ts",
+    "src/tailwind.config.aippy.json",
+    "src/components/",
+    "src/dev/",
+    "src/types/",
+    "src/vite-env.d.ts",
+    "public/robots.txt"
+  ],
+  "requiredDependencies": {
+    "dependencies": {
+      "@aippy/runtime": "^0.4.1",
+      "react": "^19.2.8",
+      "react-dom": "^19.2.8",
+      "gsap": "^3.13.0",
+      "lucide-react": "^1.34.0",
+      "matter-js": "^0.20.0",
+      "tone": "^15.1.22"
+    },
+    "devDependencies": {
+      "@types/matter-js": "^0.20.2",
+      "tailwindcss": "^4.3.3",
+      "@tailwindcss/vite": "^4.3.3"
+    }
+  },
+  "dependencyChangesFromBaseline": {
+    "dependencies": {},
+    "devDependencies": {}
+  },
+  "publicGameAssets": [],
+  "audioAssetNote": "Seven MP3 URL bindings are verified from source and merged into the local Aippy asset registry via assetConfigUpdate; no MP3 binaries are stored in this repo."
+}
