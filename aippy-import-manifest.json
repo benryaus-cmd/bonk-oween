@@ -291,5 +291,12 @@
     "devDependencies": {}
   },
   "publicGameAssets": [],
-  "audioAssetNote": "Seven MP3 URL bindings are verified from source and merged into the local Aippy asset registry via assetConfigUpdate; no MP3 binaries are stored in this repo."
+  "audioAssetNote": "Seven MP3 URL bindings are verified from source and merged into the local Aippy asset registry via assetConfigUpdate; no MP3 binaries are stored in this repo.",
+  "assetConfigWrapper": {
+    "destination": "src/config/assets.ts",
+    "url": "https://raw.githubusercontent.com/benryaus-cmd/bonk-oween/6851ed7f58704d47809abc841e766cb5f4c8eaac/src/config/assets.ts",
+    "size": 60,
+    "sha256": "2b12eef41eae53a12f748dff7337d91c5524148cd7be06c37edec1305c23f258",
+    "strategy": "create-if-missing"
+  }
 }
