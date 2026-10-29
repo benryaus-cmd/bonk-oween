@@ -95,6 +95,8 @@ export class Game {
   private captionIndex = 0;
   private runId = '';
   private babyDodgeIndex = 0;
+  private demoCueSide: Side | null = null;
+  private demoCueUntil = 0;
   /** Latched at round start; sticky once any non-ranked tweak is used. */
   private runEligible = true;
   private cfgRanked = true;
@@ -158,6 +160,8 @@ export class Game {
     this.captionIndex = 0;
     this.nextId = 1;
     this.babyDodgeIndex = 0;
+    this.demoCueSide = null;
+    this.demoCueUntil = 0;
     this.cfgRanked = isRankedConfig(this.cfg);
     this.runEligible = this.cfgRanked;
     this.runId = `run-${Date.now().toString(36)}-${Math.floor(Math.random() * 1679616).toString(36)}`;
@@ -254,6 +258,7 @@ export class Game {
     if (this.phase === 'READY' || this.phase === 'PLAYING') {
       this.advanceTargets();
       this.steerCharacter();
+      if (this.phase === 'READY') this.advanceDemo();
     }
   }
 
@@ -311,6 +316,10 @@ export class Game {
     return this.runId;
   }
 
+  get demoSide(): Side | null {
+    return this.phase === 'READY' && this.clockMs < this.demoCueUntil ? this.demoCueSide : null;
+  }
+
   get meltdownAmount(): number {
     const meltdownAt = this.cfg.meltdownStartTime * 1000;
     if (this.roundMs < meltdownAt) return 0;
@@ -318,15 +327,11 @@ export class Game {
   }
 
   private startRound(): void {
-    const offset = this.clockMs;
-    this.targets.forEach((t) => {
-      t.spawnTime -= offset;
-      t.impactTime -= offset;
-      t.resolvedAt -= offset;
-    });
-    this.director.shift(offset);
+    // A fresh approach starts after the first tap, with the same costume
+    // shown on the ready screen and a full reaction interval.
+    this.targets = [];
+    this.director.reset((Date.now() % 100000) + 7);
     this.emitted = { left: 0, right: 0 };
-    this.targets = this.targets.filter((t) => t.impactTime > -this.cfg.normalWindowMs);
     this.clockMs = 0;
     this.roundMs = 0;
     this.score = 0;
@@ -334,7 +339,8 @@ export class Game {
     this.maxCandy = 0;
     this.stainsList = [];
     this.spill = [];
-    this.costume = (['ghost', 'frankenstein', 'vampire'] as const)[Math.floor(Math.random() * 3)];
+    this.demoCueSide = null;
+    this.demoCueUntil = 0;
     this.stats = { hits: 0, perfects: 0, misses: 0, babyHits: 0, pumpkins: 0 };
     this.meltdownFired = false;
     this.newRecord = false;
@@ -421,7 +427,7 @@ export class Game {
       { lastImpact: { left: this.lastImpact('left'), right: this.lastImpact('right') }, pending },
       (req) => {
         this.emitted[req.side] = Math.max(this.emitted[req.side], req.impactTime);
-        if (req.category === 'baby') this.events.push({ type: 'BABY_INCOMING' });
+        if (req.category === 'baby' && this.phase === 'PLAYING') this.events.push({ type: 'BABY_INCOMING' });
         this.targets.push({
           ...req,
           id: this.nextId++,
@@ -445,14 +451,34 @@ export class Game {
     this.targets = this.targets.filter((t) => !t.resolved || now - t.resolvedAt < 460);
   }
 
-  private addStain(kind: StainKind): void {
+  /** Silent, non-scoring attract play: shows the thumb action without teaching text. */
+  private advanceDemo(): void {
+    const target = this.targets.find((t) => !t.resolved && t.category !== 'baby' &&
+      Math.abs(t.impactTime - this.clockMs) < 38);
+    if (!target) return;
+    const visual = targetVisual(target, this.clockMs);
+    target.resolved = true;
+    target.outcome = 'hit';
+    target.resolvedAt = this.clockMs;
+    this.demoCueSide = target.side;
+    this.demoCueUntil = this.clockMs + 620;
+    this.motion.slap(target.side, 'normal', {
+      x: (visual.x - this.layout.centerX) / this.layout.charScale,
+      y: (visual.y - this.layout.centerY) / this.layout.charScale,
+    });
+    this.effects.burst(visual.x, visual.y, ['#FFFDD0', '#FFCF73'], 4, 1.6, { shapes: ['spark'] });
+  }
+
+  private addStain(kind: StainKind, worldX: number, worldY: number): void {
     if (this.stainsList.length >= MAX_STAINS) this.stainsList.shift();
-    // Keep mess off the face and the hand contact zone.
-    const dirX = Math.random() < 0.5 ? -1 : 1;
+    // Project the actual missed object onto the costume. High throws can mark
+    // the face; low throws hit the torso. Small splashes vary the silhouette.
+    const localX = (worldX - this.layout.centerX) / this.layout.charScale;
+    const localY = (worldY - this.layout.centerY) / this.layout.charScale;
     this.stainsList.push({
       kind,
-      x: dirX * (24 + Math.random() * 34),
-      y: -6 + Math.random() * 72,
+      x: clamp(localX * 0.58 + (Math.random() - 0.5) * 35, -63, 63),
+      y: clamp(localY + (Math.random() - 0.5) * 26, -94, 72),
       rot: (Math.random() - 0.5) * 0.9,
       size: 0.82 + Math.random() * 0.4,
     });
@@ -513,7 +539,7 @@ export class Game {
     this.events.push({ type: 'MISS', side: t.side, x: p.x, y: p.y, category: t.category });
 
     if (t.category === 'junk') {
-      this.addStain(t.art === 'tpRoll' ? 'tp' : 'egg');
+      this.addStain(t.art === 'tpRoll' ? 'tp' : 'egg', p.x, p.y);
       this.motion.react(t.art === 'tpRoll' ? 'embarrassed' : 'disgust');
       this.effects.floater(p.x, p.y - 30, t.art === 'tpRoll' ? 'TOILET PAPER' : 'SPLAT', '#FFD9A0', 17);
       this.effects.burst(p.x, p.y, ['#FFE9A8', '#FFFDD0', '#E5D3A0'], 9, 2.6, { shapes: ['dot', 'sliver'] });
@@ -521,7 +547,7 @@ export class Game {
       return;
     }
     if (t.category === 'pumpkin') {
-      this.addStain('pumpkin');
+      this.addStain('pumpkin', p.x, p.y);
       this.motion.react('embarrassed');
       this.effects.floater(p.x, p.y - 30, 'SQUASHED', '#FF9A3C', 18);
       this.effects.burst(p.x, p.y, ['#FF7518', '#FFB347'], 10, 2.8, { shapes: ['dot', 'sliver'] });
@@ -539,6 +565,10 @@ export class Game {
   private resolve(t: Target, quality: HitQuality, side: Side): void {
     const now = this.clockMs;
     const visual = targetVisual(t, now);
+    const contact = {
+      x: (visual.x - this.layout.centerX) / this.layout.charScale,
+      y: (visual.y - this.layout.centerY) / this.layout.charScale,
+    };
     t.resolved = true;
     t.resolvedAt = now;
     t.outcome = 'hit';
@@ -556,7 +586,7 @@ export class Game {
       this.score = applyScore(this.score, -loss);
       this.candyCount = 0;
       if (dropped > 0) this.dropCandy(dropped);
-      this.motion.slap(side, 'whiff');
+      this.motion.slap(side, 'whiff', contact);
       this.motion.react('disgust');
       this.stats.babyHits += 1;
       this.effects.burst(visual.x, visual.y, ['#FFFFFF', '#FFE9DC', '#FFFDD0'], 12, 2.4, {
@@ -581,7 +611,7 @@ export class Game {
     this.stats.hits += 1;
     if (quality === 'perfect') this.stats.perfects += 1;
 
-    this.motion.slap(side, quality);
+    this.motion.slap(side, quality, contact);
     this.hitStop =
       t.category === 'pumpkin'
         ? this.cfg.goldenHitStopMs

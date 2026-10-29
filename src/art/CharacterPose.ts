@@ -24,6 +24,7 @@ export interface ArmPose {
   spread: number;
   handScale: number;
   handRot: number;
+  contact?: { x: number; y: number; blend: number };
 }
 
 export interface CharacterPose {

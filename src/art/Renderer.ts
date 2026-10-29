@@ -2,12 +2,14 @@ import { drawGhost } from '@/art/CharacterDraw';
 import { drawObject, objectVisualRadius } from '@/art/ObjectsDraw';
 import { buildPalette, type ArtPalette } from '@/art/palette';
 import { StreetDraw } from '@/art/StreetDraw';
+import { ToiletPaperRibbon } from '@/art/ToiletPaperRibbon';
 import { DEFAULT_CONFIG, type GameConfig } from '@/config/defaults';
 import { targetVisual } from '@/game/targetMath';
 import type { CharacterPose } from '@/art/CharacterPose';
 import type { Effects } from '@/art/Effects';
 import type { FlyingItem } from '@/game/PhysicsWorld';
 import type { ObjectArt, Stain, Target } from '@/game/types';
+import type { Side } from '@/game/types';
 
 export interface Scene {
   width: number;
@@ -27,15 +29,17 @@ export interface Scene {
   stains: readonly Stain[];
   costume?: 'ghost' | 'frankenstein' | 'vampire';
   spilledCandy?: readonly { x: number; y: number; angle: number; scale: number; art: ObjectArt; ageMs: number }[];
+  demoSide?: Side | null;
 }
 
 /** Renders live targets and character over a cached perspective street. */
 export class Renderer {
   private readonly street = new StreetDraw();
+  private readonly paper = new ToiletPaperRibbon();
   private palette: ArtPalette = buildPalette(DEFAULT_CONFIG);
   private paletteKey = '';
 
-  reset(): void { this.paletteKey = ''; }
+  reset(): void { this.paletteKey = ''; this.paper.clear(); }
 
   render(ctx: CanvasRenderingContext2D, scene: Scene, _bg: HTMLImageElement | null): void {
     const { width, height, cfg, centerX, centerY, charScale, effects } = scene;
@@ -74,6 +78,10 @@ export class Renderer {
       if (t2.resolved && t2.outcome !== 'miss') continue;
       const v = targetVisual(t2, scene.clockMs);
       if (v.alpha <= 0.02) continue;
+      if (t2.art === 'tpRoll') {
+        ctx.globalAlpha = v.alpha;
+        this.paper.draw(ctx, `incoming-${t2.id}`, v.x, v.y + 11, t2.side === 'left' ? 1 : -1, t2.size * v.scale, scene.clockMs);
+      }
       ctx.save();
       ctx.globalAlpha = v.alpha;
       ctx.translate(v.x, v.y);
@@ -107,13 +115,13 @@ export class Renderer {
       } else if (!t2.resolved) {
         // Approach cue: the ring tightens and turns gold at the slap moment.
         const delta = t2.impactTime - scene.clockMs;
-        const span = cfg.normalWindowMs + 120;
+        const span = cfg.normalWindowMs;
         if (Math.abs(delta) <= span) {
           const closeness = 1 - Math.min(1, Math.abs(delta) / span);
           const urgency = Math.max(0, Math.min(1, v.urgency));
           const throb = urgency * (0.5 + 0.5 * Math.sin(scene.clockMs / 72));
           ctx.globalAlpha = v.alpha * (0.2 + 0.55 * closeness + 0.23 * throb);
-          ctx.strokeStyle = closeness > 0.78 ? p.gold : t2.category === 'junk' ? '#FFD9A0' : p.accent;
+          ctx.strokeStyle = Math.abs(delta) <= cfg.perfectWindowMs ? p.gold : t2.category === 'junk' ? '#FFD9A0' : p.accent;
           ctx.lineWidth = 2 + closeness * 2 + throb * 1.4;
           ctx.beginPath();
           ctx.arc(0, 0, radius * (1.2 + (1 - closeness) * 0.65 + throb * 0.08), 0, Math.PI * 2);
@@ -142,6 +150,11 @@ export class Renderer {
     for (const item of scene.flying) {
       const life = item.lifeMs / Math.max(1, item.maxLifeMs);
       const fade = life > 0.7 ? Math.max(0, 1 - (life - 0.7) / 0.3) : 1;
+      if (item.art === 'tpRoll') {
+        ctx.globalAlpha = fade;
+        this.paper.draw(ctx, `flying-${item.id}`, item.body.position.x, item.body.position.y + 10,
+          item.body.velocity.x >= 0 ? 1 : -1, item.size, scene.clockMs);
+      }
       if (cfg.trailOpacity > 0.02 && item.trail.length > 1) {
         const tail = item.trail[item.trail.length - 1];
         const head = item.body.position;
@@ -175,6 +188,17 @@ export class Renderer {
     ctx.restore();
 
     effects.drawFlash(ctx, width, height);
+    if (scene.demoSide) {
+      const left = scene.demoSide === 'left';
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.font = '900 13px system-ui';
+      ctx.lineWidth = 4; ctx.strokeStyle = '#211033'; ctx.fillStyle = '#FFE5AB';
+      const x = centerX + (left ? -118 : 118) * charScale;
+      const y = centerY - 76 * charScale;
+      const label = left ? '◀ TAP LEFT' : 'TAP RIGHT ▶';
+      ctx.strokeText(label, x, y); ctx.fillText(label, x, y);
+      ctx.restore();
+    }
   }
 
 }

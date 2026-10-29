@@ -102,7 +102,8 @@ export class StreetDraw {
     if (this.background) ctx.drawImage(this.background, 0, 0, w, h);
     const phase = timeMs / 1000 * cfg.backgroundAnimationSpeed * (cfg.reducedMotion ? 0.32 : 1) * 0.16;
     for (let i = 0; i < 10; i++) {
-      const depth = ((i / 10 + phase) % 1 + 1) % 1, d = depth * depth;
+      // The child travels *into* the street: scenery recedes to the vanishing point.
+      const depth = (((i / 10 - phase) % 1 + 1) % 1) * 1.5, d = depth * depth;
       const y = this.horizon + (h - this.horizon) * d;
       const edge = this.half(w, h, y), width = 1 + d * 7;
       ctx.globalAlpha = 0.1 + d * 0.25; ctx.fillStyle = '#D6BA9E';
@@ -119,26 +120,41 @@ export class StreetDraw {
     }
     ctx.globalAlpha = 1;
     if (!this.house) return;
-    for (let i = 0; i < 5; i++) {
-      const depth = ((i / 5 + phase * 0.5) % 1 + 1) % 1, d = depth * depth;
+    // Sort by distance every frame. Wrapping rows otherwise paint a far house
+    // over a nearer one once per cycle.
+    const rows = Array.from({ length: 7 }, (_, i) => ({
+      i,
+      // Wrap behind the camera, well below the screen, then walk back into view.
+      depth: (((i / 7 - phase * 0.5) % 1 + 1) % 1) * 1.5,
+    })).sort((a, b) => a.depth - b.depth);
+    for (const { i, depth } of rows) {
+      const d = depth * depth;
       const y = this.horizon + (h - this.horizon) * d;
       const scale = 0.13 + depth * 1.55;
       const edge = this.half(w, h, y);
-      const fade = Math.min(1, depth * 9, (1 - depth) * 7);
+      const fade = Math.min(1, depth * 11);
       for (const side of [-1, 1]) {
-        const x = w / 2 + side * (edge + scale * 84);
+        const x = w / 2 + side * (edge + scale * (82 + (i % 3) * 8));
         ctx.save(); ctx.globalAlpha = fade; ctx.translate(x, y); ctx.scale(side * scale, scale);
         ctx.drawImage(this.house, -72, -156, 144, 166); ctx.restore();
-      }
-      if (i % 2 === 0 && depth < 0.59 && depth > 0.12) {
-        const k = 0.22 + depth * 0.56, side = i % 4 === 0 ? -1 : 1;
-        const x = w / 2 + side * (edge + 19 * k);
-        ctx.save(); ctx.globalAlpha = fade; ctx.translate(x, y + 2); ctx.scale(k, k);
-        ctx.fillStyle = '#171026'; ctx.beginPath();
-        ctx.moveTo(-9, 0); ctx.lineTo(-6, -28); ctx.lineTo(6, -28); ctx.lineTo(9, 0); ctx.fill();
-        ctx.fillStyle = i % 4 ? '#CF7745' : '#CCC1CE';
-        ctx.beginPath(); ctx.arc(0, -35, 10, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#E8A947'; ctx.fillRect(7, -13, 10, 10); ctx.restore();
+        // Every row has a pair of trick-or-treaters at different sidewalk
+        // offsets. They stay visible all the way to the lower edge.
+        const k = 0.13 + depth * 0.82;
+        const px = w / 2 + side * (edge + (15 + (i % 2) * 16) * k);
+        ctx.save(); ctx.globalAlpha = fade; ctx.translate(px, y + 2); ctx.scale(k, k);
+        ctx.fillStyle = 'rgba(5,3,13,0.28)'; ctx.beginPath(); ctx.ellipse(0, 3, 17, 5, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = (i + side) % 3 === 0 ? '#6B4D8F' : '#342B52';
+        ctx.beginPath(); ctx.moveTo(-10, 0); ctx.lineTo(-7, -31); ctx.lineTo(7, -31); ctx.lineTo(10, 0); ctx.fill();
+        const stride = Math.sin(timeMs / 250 + i * 1.7 + side) * 4;
+        ctx.strokeStyle = '#120C21'; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-4, -1); ctx.lineTo(-5 + stride, 10);
+        ctx.moveTo(4, -1); ctx.lineTo(5 - stride, 10); ctx.stroke();
+        ctx.fillStyle = (i + side) % 4 === 0 ? '#A8D787' : '#E3B58E';
+        ctx.beginPath(); ctx.arc(0, -39, 11, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = (i + side) % 3 === 0 ? '#6E273D' : '#241B39';
+        ctx.beginPath(); ctx.moveTo(-12, -45); ctx.lineTo(0, -60); ctx.lineTo(12, -45); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#EB9A46'; ctx.fillRect(side < 0 ? -19 : 12, -12, 10, 10);
+        ctx.restore();
       }
     }
   }

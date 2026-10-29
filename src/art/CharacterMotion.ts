@@ -90,6 +90,7 @@ interface ArmState {
   active: boolean;
   quality: HitQuality | 'whiff';
   anticip: number;
+  contact?: { x: number; y: number };
 }
 
 interface Smooth {
@@ -161,8 +162,8 @@ export class CharacterMotion {
     this.cfg = motionConfigFrom(cfg);
   }
 
-  slap(side: Side, quality: HitQuality | 'whiff'): void {
-    this.arms[side] = { slapMs: 0, active: true, quality, anticip: 0 };
+  slap(side: Side, quality: HitQuality | 'whiff', contact?: { x: number; y: number }): void {
+    this.arms[side] = { slapMs: 0, active: true, quality, anticip: 0, contact };
     this.impulse = quality === 'perfect' ? 1 : quality === 'normal' ? 0.68 : 0.32;
     if (quality === 'perfect') this.react('ecstatic');
     else if (quality === 'normal') this.react('satisfied');
@@ -347,6 +348,7 @@ export class CharacterMotion {
           spread: 0.45 + reach * 0.55,
           handScale: 1 + (this.cfg.impactHandScale - 1) * pop,
           handRot: dir * reach * 0.42,
+          contact: arm.contact ? { ...arm.contact, blend: Math.max(0, 1 - t * 1.7) } : undefined,
         };
       }
       const k = Math.exp(-(arm.slapMs - out) / (rec * 0.5));
@@ -356,6 +358,7 @@ export class CharacterMotion {
         spread: 0.4 * k,
         handScale: 1 + (this.cfg.impactHandScale - 1) * 0.3 * k,
         handRot: dir * 0.4 * k,
+        contact: arm.contact ? { ...arm.contact, blend: 0.12 * k } : undefined,
       };
     }
 

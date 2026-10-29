@@ -1,19 +1,27 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useAudioContext, useSound } from '@aippy/runtime/audio';
 import { AudioManager } from '@/audio/AudioManager';
-import { BABY_HIT_URL, BABY_INCOMING_URL, MUSIC_URL, SFX_MANIFEST, type SfxName } from '@/audio/manifest';
+import { cachedAudio } from '@/audio/AssetPreload';
+import { CrossfadeMusic } from '@/audio/CrossfadeMusic';
+import { BABY_HIT_EXTRA_URL, BABY_HIT_URL, BABY_INCOMING_URL, CANDY_POP_URL, MENU_MUSIC_URL, MUSIC_URL, PERFECT_EXTRA_URL, SFX_MANIFEST, type SfxName } from '@/audio/manifest';
+
+export type MusicMode = 'off' | 'menu' | 'game';
 
 export interface GameAudioApi {
   playSfx: (name: SfxName, gain?: number) => void;
   /** Call from a real tap handler — unlocks the context and drives the loop. */
-  syncMusic: (shouldPlay: boolean) => void;
+  syncMusic: (mode: MusicMode) => void;
   stopMusic: () => void;
 }
 
 const SOUND_MAP = {
   bgm: MUSIC_URL,
+  menuBgm: MENU_MUSIC_URL,
   babyIncoming: BABY_INCOMING_URL,
   babyHit: BABY_HIT_URL,
+  babyHitExtra: BABY_HIT_EXTRA_URL,
+  perfectExtra: PERFECT_EXTRA_URL,
+  candyPop: CANDY_POP_URL,
 };
 
 export interface AudioSettings {
@@ -35,17 +43,24 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
   const settingsRef = useRef<AudioSettings>(settings);
   const musicKeyRef = useRef('');
   const musicPlayingRef = useRef(false);
-  const lastRecordedRef = useRef({ babyIncoming: -Infinity, babyHit: -Infinity });
+  const musicModeRef = useRef<MusicMode>('off');
+  const loopersRef = useRef({ menu: new CrossfadeMusic(), game: new CrossfadeMusic() });
+  const lastRecordedRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     settingsRef.current = settings;
     managerRef.current?.setVolumes(settings.master, settings.sfx, settings.muted);
+    const volume = settings.muted || !settings.musicEnabled ? 0 : settings.master * settings.music;
+    loopersRef.current.menu.setVolume(volume);
+    loopersRef.current.game.setVolume(volume);
   }, [settings]);
 
   useEffect(
     () => () => {
       managerRef.current?.dispose();
       managerRef.current = null;
+      loopersRef.current.menu.stop();
+      loopersRef.current.game.stop();
     },
     [],
   );
@@ -63,23 +78,41 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
       manager.setVolumes(s.master, s.sfx, s.muted);
     };
 
-    const syncMusic = (shouldPlay: boolean): void => {
+    const syncMusic = (mode: MusicMode): void => {
       const s = settingsRef.current;
       const volume = Math.max(0, Math.min(1, s.music * s.master));
-      const want = shouldPlay && !s.muted && s.musicEnabled && volume > 0.002;
-      const key = `${want ? 1 : 0}:${volume.toFixed(2)}`;
+      const want = mode !== 'off' && !s.muted && s.musicEnabled && volume > 0.002;
+      const effectiveMode: MusicMode = want ? mode : 'off';
+      const key = `${effectiveMode}:${volume.toFixed(2)}`;
       const retry = want && !musicPlayingRef.current;
       if (!retry && musicKeyRef.current === key) return;
       musicKeyRef.current = key;
+      musicModeRef.current = effectiveMode;
       if (!want) {
         musicPlayingRef.current = false;
         stop('bgm');
+        stop('menuBgm');
+        loopersRef.current.menu.stop();
+        loopersRef.current.game.stop();
         return;
       }
+      const track = mode === 'menu' ? 'menu' : 'game';
+      loopersRef.current.menu.stop();
+      loopersRef.current.game.stop();
+      stop('bgm'); stop('menuBgm');
+      musicPlayingRef.current = false;
       void ensure().then(async () => {
-        const handle = await play('bgm', { loop: true, volume });
+        if (musicModeRef.current !== mode) return;
+        const ctx = getAudioContext();
+        const bytes = cachedAudio(track === 'menu' ? MENU_MUSIC_URL : MUSIC_URL);
+        if (ctx && bytes && await loopersRef.current[track].start(ctx, bytes, volume)) {
+          musicPlayingRef.current = true;
+          return;
+        }
+        if (musicModeRef.current !== mode) return;
+        const handle = await play(track === 'menu' ? 'menuBgm' : 'bgm', { loop: true, volume });
         musicPlayingRef.current = Boolean(handle);
-      });
+      }).catch(() => { musicPlayingRef.current = false; });
     };
 
     return {
@@ -87,9 +120,9 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
         const s = settingsRef.current;
         if (s.muted || !s.soundEnabled) return;
         const def = SFX_MANIFEST[name];
-        if (name === 'babyIncoming' || name === 'babyHit') {
+        if (name === 'babyIncoming' || name === 'babyHit' || name === 'babyHitExtra' || name === 'perfectExtra' || name === 'candyPop') {
           const now = performance.now();
-          if (now - lastRecordedRef.current[name] < def.cooldown) return;
+          if (now - (lastRecordedRef.current[name] ?? -Infinity) < def.cooldown) return;
           lastRecordedRef.current[name] = now;
           const volume = Math.max(0, Math.min(1, gain * def.defaultGain * s.master * s.sfx));
           if (volume <= 0.002) return;
@@ -100,7 +133,7 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
             } catch {
               // A blocked CDN or decode failure should not interrupt a run.
             }
-            managerRef.current?.play(name === 'babyHit' ? 'cursedHit' : 'characterReact', {
+            managerRef.current?.play(name === 'babyHit' || name === 'babyHitExtra' ? 'cursedHit' : 'slapSoft', {
               gain,
               pitchVariance: s.pitchVariation,
               maxVoices: s.maxVoices,
@@ -119,8 +152,7 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
       syncMusic,
       stopMusic: () => {
         musicKeyRef.current = '';
-        musicPlayingRef.current = false;
-        stop('bgm');
+        syncMusic('off');
       },
     };
   }, [getAudioContext, unlock, play, stop]);

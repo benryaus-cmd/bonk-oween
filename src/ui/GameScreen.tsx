@@ -1,23 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { reportScore } from '@aippy/runtime/leaderboard';
 import { Renderer } from '@/art/Renderer';
+import { preloadGameAssets } from '@/audio/AssetPreload';
 import { haptic } from '@/audio/haptics';
-import { BACKGROUND_BG_URL } from '@/audio/manifest';
 import { useGameAudio } from '@/hooks/useGameAudio';
-import { useGameImages } from '@/hooks/useGameImages';
 import { useGameLoop, type GameLoopContext } from '@/hooks/useGameLoop';
 import { isRankedConfig } from '@/game/eligibility';
 import { computeLayout, Game } from '@/game/Game';
 import { sendScorePlaceholder } from '@/game/scoreSend';
 import CaptionLayer, { type CaptionEntry } from '@/ui/CaptionLayer';
 import GameHUD from '@/ui/GameHUD';
+import GhostPortrait from '@/ui/GhostPortrait';
 import ResultsScreen from '@/ui/ResultsScreen';
 import SettingsPanel from '@/ui/SettingsPanel';
 import '@/ui/ui.css';
 import type { GameConfig } from '@/config/defaults';
 import type { CaptionTone, GameEvent, HudSnapshot, Side } from '@/game/types';
 
-const BG_URLS = { bg: BACKGROUND_BG_URL };
 const renderer = new Renderer();
 
 interface GameScreenProps {
@@ -45,6 +44,8 @@ const GameScreen = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [paused, setPaused] = useState(false);
   const [caption, setCaption] = useState<CaptionEntry | null>(null);
+  const [assets, setAssets] = useState({ ready: false, complete: 0, total: 1, failures: 0 });
+  const [entered, setEntered] = useState(false);
   const [hud, setHud] = useState<HudSnapshot>({
     phase: 'READY',
     score: 0,
@@ -64,7 +65,6 @@ const GameScreen = ({
     eligible: true,
   });
 
-  const { images } = useGameImages(BG_URLS);
   const rankedNow = useMemo(() => isRankedConfig(config), [config]);
 
   const audioSettings = useMemo(
@@ -90,6 +90,13 @@ const GameScreen = ({
     ],
   );
   const audio = useGameAudio(audioSettings);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void preloadGameAssets((complete, total) => setAssets((s) => ({ ...s, complete, total })), controller.signal)
+      .then((failures) => { if (!controller.signal.aborted) setAssets((s) => ({ ...s, ready: true, failures: failures.length })); });
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     configRef.current = config;
@@ -135,9 +142,10 @@ const GameScreen = ({
   }, [caption, config.captionDuration]);
 
   useEffect(() => {
-    const inRound = hud.phase !== 'RESULTS';
-    audio.syncMusic(inRound && !settingsOpen && !paused);
-  }, [hud.phase, settingsOpen, paused, audio]);
+    const mode = !assets.ready || !entered || settingsOpen || paused || hud.phase === 'RESULTS'
+      ? 'off' : hud.phase === 'READY' ? 'menu' : 'game';
+    audio.syncMusic(mode);
+  }, [hud.phase, settingsOpen, paused, assets.ready, entered, muted, config.musicVolume, config.masterVolume, config.musicEnabled, audio]);
 
   const handleEvents = (events: GameEvent[]) => {
     const cfg = configRef.current;
@@ -145,6 +153,8 @@ const GameScreen = ({
       switch (ev.type) {
         case 'CANDY_COLLECTED':
           audio.playSfx(ev.perfect ? 'slapPerfect' : 'slapHard', cfg.normalHitVolume);
+          audio.playSfx('candyPop', cfg.normalHitVolume);
+          if (ev.perfect) audio.playSfx('perfectExtra', cfg.perfectHitVolume);
           haptic(ev.perfect ? 'perfect' : 'hit', cfg.hapticsEnabled, cfg.hapticIntensity);
           if (ev.candy > 0 && ev.candy % 5 === 0) audio.playSfx('comboUp', cfg.comboVolume);
           break;
@@ -158,6 +168,7 @@ const GameScreen = ({
           break;
         case 'BABY_HIT':
           audio.playSfx('babyHit', cfg.mistakeVolume);
+          audio.playSfx('babyHitExtra', cfg.mistakeVolume);
           haptic('mistake', cfg.hapticsEnabled, cfg.hapticIntensity);
           break;
         case 'BABY_INCOMING':
@@ -280,8 +291,9 @@ const GameScreen = ({
         stains: game.stains,
         costume: game.costume,
         spilledCandy: game.spilledCandy,
+        demoSide: game.demoSide,
       },
-      images.bg ?? null,
+      null,
     );
   };
 
@@ -292,7 +304,7 @@ const GameScreen = ({
   );
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (settingsOpen) return;
+    if (settingsOpen || !assets.ready || !entered) return;
     const game = gameRef.current;
     if (!game) return;
     const point = getLogicalCoords(e);
@@ -302,7 +314,7 @@ const GameScreen = ({
   };
 
   const handleClick = () => {
-    audio.syncMusic(!settingsOpen && !paused);
+    audio.syncMusic(settingsOpen || paused ? 'off' : gameRef.current?.phase === 'READY' ? 'menu' : 'game');
   };
 
   const handleReplay = () => {
@@ -313,7 +325,7 @@ const GameScreen = ({
     lastTick.current = -1;
     setCaption(null);
     if (game) setHud(game.hud);
-    audio.syncMusic(true);
+    audio.syncMusic('menu');
   };
 
   const toggleMute = () => {
@@ -333,6 +345,31 @@ const GameScreen = ({
         onPointerDown={handlePointerDown}
         onClick={handleClick}
       />
+
+      {!entered && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-[#170B29] text-center text-[#FFFDD0]" role="status" aria-live="polite">
+          <GhostPortrait cfg={config} candy={0} stains={[]} costume="ghost" width={148} height={164} />
+          <div className="text-xl font-black uppercase tracking-[0.16em]">Packing the bag</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#E7C790]">
+            {assets.ready ? 'The street is ready.' : 'Checking the street and sounds…'}
+          </div>
+          <div className="h-2 w-48 overflow-hidden rounded-full bg-[#493164]">
+            <div className="h-full rounded-full bg-[#FFB247] transition-[width] duration-200" style={{ width: `${Math.round(assets.complete / assets.total * 100)}%` }} />
+          </div>
+          <div className="text-xs font-black tabular-nums">{assets.complete}/{assets.total}</div>
+          {assets.ready && (
+            <button type="button" className="bonk-play mt-3 rounded-2xl px-7 py-3 text-sm font-black uppercase tracking-[0.12em] text-[#1B0A2D]" onClick={() => {
+              audio.syncMusic('menu');
+              setEntered(true);
+            }}>Enter the street</button>
+          )}
+        </div>
+      )}
+      {entered && assets.failures > 0 && hud.phase === 'READY' && (
+        <div className="pointer-events-none absolute inset-x-0 top-[13%] z-20 text-center text-[10px] font-bold text-[#FFE0AF]">
+          Some remote sounds are unavailable. You can still play.
+        </div>
+      )}
 
       <GameHUD
         score={hud.score}

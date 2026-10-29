@@ -1,8 +1,11 @@
 import assetsData from "@/config/assets";
-export const MUSIC_URL = assetsData.AUDIO_DRSR;
-export const BACKGROUND_BG_URL = assetsData.IMAGE_MWMM;
+export const MUSIC_URL = assetsData.AUDIO_BGM;
+export const MENU_MUSIC_URL = assetsData.AUDIO_MENU_BGM;
 export const BABY_INCOMING_URL = assetsData.AUDIO_BABY_INCOMING;
 export const BABY_HIT_URL = assetsData.AUDIO_BABY_HIT;
+export const BABY_HIT_EXTRA_URL = assetsData.AUDIO_BABY_HIT_EXTRA;
+export const PERFECT_EXTRA_URL = assetsData.AUDIO_PERFECT_EXTRA;
+export const CANDY_POP_URL = assetsData.AUDIO_CANDY_POP;
 
 export type SfxName =
   | 'slapSoft'
@@ -15,6 +18,9 @@ export type SfxName =
   | 'cursedHit'
   | 'babyIncoming'
   | 'babyHit'
+  | 'babyHitExtra'
+  | 'perfectExtra'
+  | 'candyPop'
   | 'objectMiss'
   | 'countdown'
   | 'finalMeltdown'
@@ -56,6 +62,9 @@ export const SFX_MANIFEST: Record<SfxName, SfxDef> = {
   cursedHit: { desc: 'low buzzing error', category: 'mood', defaultGain: 0.85, cooldown: 120, maxVoices: 2, pitchVariance: 0.05 },
   babyIncoming: { desc: 'incoming baby warning (recorded)', category: 'mood', defaultGain: 0.9, cooldown: 600, maxVoices: 1, pitchVariance: 0 },
   babyHit: { desc: 'baby bonked (recorded)', category: 'mood', defaultGain: 0.9, cooldown: 300, maxVoices: 1, pitchVariance: 0 },
+  babyHitExtra: { desc: 'second baby mistake layer (recorded)', category: 'mood', defaultGain: 0.54, cooldown: 300, maxVoices: 1, pitchVariance: 0 },
+  perfectExtra: { desc: 'perfect accent (recorded)', category: 'hit', defaultGain: 0.45, cooldown: 45, maxVoices: 2, pitchVariance: 0 },
+  candyPop: { desc: 'candy pickup pop (recorded)', category: 'hit', defaultGain: 0.43, cooldown: 45, maxVoices: 3, pitchVariance: 0 },
   objectMiss: { desc: 'sad whoosh', category: 'mood', defaultGain: 0.5, cooldown: 120, maxVoices: 2, pitchVariance: 0.08 },
   countdown: { desc: 'tick', category: 'system', defaultGain: 0.4, cooldown: 120, maxVoices: 2, pitchVariance: 0 },
   finalMeltdown: { desc: 'alarm stab', category: 'system', defaultGain: 0.9, cooldown: 400, maxVoices: 1, pitchVariance: 0 },

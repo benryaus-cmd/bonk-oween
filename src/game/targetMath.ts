@@ -19,7 +19,7 @@ export function targetVisual(t: Target, nowMs: number): TargetVisual {
   const p = Math.min(raw, 1);
   // Keep a nonzero velocity through impact instead of freezing at the contact point.
   const eased = p + 0.17 * Math.sin(Math.PI * p);
-  const travel = eased + Math.max(0, raw - 1) * (1 - 0.17 * Math.PI);
+  const travel = eased + Math.min(0.055, Math.max(0, raw - 1) * (1 - 0.17 * Math.PI));
   let x = lerp(t.startX, t.endX, travel);
   let y = lerp(t.startY, t.endY, travel) + Math.sin(p * Math.PI * 2) * 7;
   let alpha = clamp((nowMs - t.spawnTime) / FADE_IN_MS, 0, 1);
@@ -31,7 +31,7 @@ export function targetVisual(t: Target, nowMs: number): TargetVisual {
 
   if (t.resolved && t.outcome === 'miss') {
     const k = clamp((nowMs - t.resolvedAt) / 420, 0, 1);
-    const dir = t.side === 'left' ? 1 : -1;
+    const dir = t.side === 'left' ? -1 : 1;
     x += dir * k * 110;
     alpha *= 1 - k;
     scale = 1 + k * 0.15;

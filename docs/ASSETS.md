@@ -1,78 +1,19 @@
-# Audio & art assets — BONK!
+# BONK Oween assets and audio
 
-## Why there are no `.wav` files in this project
+The Aippy asset list is `src/config/assets.json`. It contains the two looped music tracks and five recorded cues used by the game:
 
-The product spec declares every sound effect as type **`synth`** (slap soft, slap
-perfect, golden hit, cursed hit, combo up, UI tap). For `synth` assets the correct
-implementation is programmatic synthesis with Tone.js on the Aippy audio context —
-no file is generated, decoded or shipped. The single `music` asset is the real
-looping track and is loaded from its CDN URL.
-
-That means: no placeholder files, no silent buffers, no `OscillatorNode` created per
-frame. Instruments are built once when the audio context unlocks and reused, with
-per-event gain, cooldown, voice cap and pitch variance.
-
-If you later replace a synth effect with a recorded file, here is how.
-
-## Sound effects (synthesised)
-
-Defined in `src/audio/manifest.ts` (`SFX_MANIFEST`) and played by
-`src/audio/AudioManager.ts`.
-
-| Id | Character | Used for |
+| Event | Asset key | Source |
 | --- | --- | --- |
-| `slapSoft` | soft noise slap + low thump | whiff / light tap |
-| `slapHard` | heavier noise + body thump | normal hit |
-| `slapPerfect` | sharp noise + high ping | perfect hit |
-| `slapCritical` | big thump + bright FM stab | perfect hit at combo ≥ 10 |
-| `comboUp` | two-note rise | every 5th combo |
-| `comboBreak` | descending buzz | miss / whiff |
-| `goldenHit` | three-note shimmer | golden prize |
-| `cursedHit` | low buzz pair | cursed cube slapped |
-| `objectMiss` | short sad buzz | object flew past |
-| `countdown` | tick | last 5 seconds |
-| `finalMeltdown` | alarm stab | meltdown starts |
-| `scoreReveal` | arpeggio | results screen |
-| `newRecord` | four-note flourish | new personal best |
-| `uiTap` / `uiBack` / `uiRestart` | hollow clicks | UI |
-| `characterReact` | squeak | reserved for character reactions |
+| Ready / attract screen only | `AUDIO_MENU_BGM` | 865677_71257-lq.mp3 |
+| Playing only | `AUDIO_BGM` | 865678_71257-lq.mp3 |
+| Baby incoming | `AUDIO_BABY_INCOMING` | 461792_9676877-lq.mp3 |
+| Baby punched, first layer | `AUDIO_BABY_HIT` | 113160_1927446-lq.mp3 |
+| Baby punched, second layer | `AUDIO_BABY_HIT_EXTRA` | 172078_764147-lq.mp3 |
+| Perfect catch, beside synth | `AUDIO_PERFECT_EXTRA` | 547346_10485775-lq.mp3 |
+| Every candy catch, beside slap | `AUDIO_CANDY_POP` | 868506_19015218-lq.mp3 |
 
-Per-event metadata (`defaultGain`, `cooldown`, `maxVoices`, `pitchVariance`,
-`category`) lives next to each id, so a sound can be retuned without touching
-gameplay code.
+All URLs are the user-supplied Freesound CDN preview files. The candy pop was resolved from the specific [LSpec sound page](https://freesound.org/people/LSpec/sounds/868506/), which lists CC0. Check the other sounds' licenses before store distribution.
 
-## Music
+`AssetPreload.ts` fetches all active audio before the player enters the ready scene, reports real asset-count progress, and permits play when a CDN file fails. `useGameAudio.ts` uses the recorded sounds with the existing SFX volume/mute controls and Tone.js synth fallbacks. `CrossfadeMusic.ts` decodes each music file once and schedules two copies to overlap for up to 100 ms at the loop seam; it stops music on the results screen and when backgrounded. The platform may require a user gesture to unlock sound, so the loader has an Enter button before the ready scene.
 
-- URL: the `music` asset from the spec, loaded through `useSound` (decoded once).
-- Started **only** from a trusted `click` handler, looped, and stopped on results.
-- Volume = `musicVolume × masterVolume`; `musicEnabled` and mute both silence it.
-- If the browser refuses playback the game continues silently and retries on the
-  next gesture.
-
-## Haptics
-
-`src/audio/haptics.ts` uses the verified Aippy device bridge (`vibrate`) with four
-patterns scaled by `hapticIntensity`, and does nothing when `hapticsEnabled` is off
-or the platform has no vibration motor.
-
-## Art
-
-Everything on screen is drawn procedurally with Canvas 2D:
-
-- `src/art/CharacterDraw.ts` — the gremlin (bezier body, cel shading, face parts, elastic arms).
-- `src/art/ObjectsDraw.ts` — the 12 objects.
-- `src/art/Effects.ts` — particles, rings, floating text, flash, shake.
-- `src/art/Renderer.ts` — backdrop (pre-rendered), ambient accents, draw order.
-- `src/art/palette.ts` — every colour derived from the live config.
-
-The single `image-bg` asset from the spec is used as the arena backdrop (cover fit,
-with a veil + vignette on top). Character/prop sprites are intentionally **not**
-used: both build prompts require an original procedurally drawn cast, and mixing
-raster sprites with vector-drawn objects would break the art style.
-
-### Swapping the backdrop
-
-Replace the `IMAGE_MWMM` URL in `src/config/assets.json` (auto-generated from source
-URLs) or drop a new URL into the `useGameImages` map in `src/ui/GameScreen.tsx`.
-Any 2:3 portrait image works; it is drawn with cover semantics and darkened by the
-backdrop gradient, so high-contrast images keep the objects readable.
+The street, characters, candy, and the toilet paper strip are drawn in Canvas 2D. The old static background image is no longer used.

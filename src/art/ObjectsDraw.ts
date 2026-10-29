@@ -258,18 +258,7 @@ function drawEgg(ctx: CanvasRenderingContext2D, p: ArtPalette, t: number): void 
 }
 
 function drawTpRoll(ctx: CanvasRenderingContext2D, p: ArtPalette, t: number): void {
-  // long loose ribbon trailing behind the roll
-  const wob = (x: number) => Math.sin(t / 240 + x * 0.35) * 7;
-  ctx.fillStyle = '#FBFAFF';
-  ctx.beginPath();
-  ctx.moveTo(-6, 16);
-  ctx.quadraticCurveTo(-24, 22 + wob(0), -40, 12 + wob(1));
-  ctx.quadraticCurveTo(-56, 2 + wob(2), -62, 14 + wob(3));
-  ctx.quadraticCurveTo(-56, 22 + wob(4), -42, 22 + wob(2));
-  ctx.quadraticCurveTo(-26, 32 + wob(1), -6, 26);
-  ctx.closePath();
-  ctx.fill();
-  ol(ctx, p, 2.4);
+  // The moving ribbon is simulated in ToiletPaperRibbon, behind this roll.
   // roll
   ctx.fillStyle = '#FBFAFF';
   ctx.beginPath();

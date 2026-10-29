@@ -130,6 +130,10 @@ function drawArm(
   const sx = dir < 0 ? -54 : 56;
   const sy = -14;
   const end = armEnd(side, arm, opts.stretch);
+  if (arm.contact) {
+    end.x += (arm.contact.x - end.x) * arm.contact.blend;
+    end.y += (arm.contact.y - end.y) * arm.contact.blend;
+  }
   const dx = end.x - sx;
   const dy = end.y - sy;
   const len = Math.max(1, Math.hypot(dx, dy));
@@ -276,6 +280,7 @@ function drawStains(
   stains: readonly Stain[],
   p: ArtPalette,
   line: number,
+  walk: number,
 ): void {
   for (const s of stains) {
     ctx.save();
@@ -297,18 +302,23 @@ function drawStains(
         ctx.fill();
       });
     } else if (s.kind === 'tp') {
-      for (let i = 0; i < 3; i += 1) {
-        ctx.fillStyle = '#FBFAFF';
-        ctx.beginPath();
-        ctx.moveTo(-16 + i * 4, -14);
-        ctx.quadraticCurveTo(-2 + i * 6, 0, -12 + i * 8, 18);
-        ctx.quadraticCurveTo(-4 + i * 8, 20, 2 + i * 6, 16);
-        ctx.quadraticCurveTo(-2 + i * 6, 2, 12 + i * 4, -12);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = alpha(p.outline, 0.4);
-        ctx.lineWidth = line * 0.5;
-        ctx.stroke();
+      // One strip wraps over the shoulder and hangs free, following the walk.
+      const sway = Math.sin(walk * 0.8 + s.x * 0.1) * 6;
+      ctx.fillStyle = '#FBFAFF';
+      ctx.beginPath();
+      ctx.moveTo(-27, -9); ctx.quadraticCurveTo(-7, -17, 19, -7);
+      ctx.quadraticCurveTo(34, 1, 18, 12);
+      ctx.lineTo(11, 7); ctx.quadraticCurveTo(20, 1, 13, -1);
+      ctx.quadraticCurveTo(-5, -5, -27, 0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = alpha(p.outline, 0.45); ctx.lineWidth = line * 0.43; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(12, 6); ctx.lineTo(22, 8);
+      ctx.quadraticCurveTo(31 + sway, 30, 22 + sway, 68);
+      ctx.lineTo(7 + sway, 69); ctx.quadraticCurveTo(18 + sway, 35, 12, 6);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = alpha(p.shadow, 0.35); ctx.lineWidth = 1.2;
+      for (const y of [25, 48]) {
+        ctx.beginPath(); ctx.moveTo(15 + sway * (y / 70), y);
+        ctx.lineTo(26 + sway * (y / 70), y + 1); ctx.stroke();
       }
     } else {
       ctx.fillStyle = 'rgba(199,75,12,.24)';
@@ -463,11 +473,11 @@ function drawBag(
 /** A diagonal neck strap visibly carries the swinging mesh sack. */
 function drawBagStrap(ctx: CanvasRenderingContext2D, p: ArtPalette, line: number, swing: number, candy: number): void {
   ctx.save(); ctx.strokeStyle = p.outline; ctx.lineWidth = 9; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(-26, -80);
-  ctx.quadraticCurveTo(18, -52, BAG_X + swing * 2, BAG_Y - bagRadius(candy)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-58, -14);
+  ctx.bezierCurveTo(-39, 1, -3, 30, BAG_X + swing * 2, BAG_Y - bagRadius(candy)); ctx.stroke();
   ctx.strokeStyle = '#C59A6B'; ctx.lineWidth = 5; ctx.stroke();
   ctx.fillStyle = '#F8DFA0'; ctx.strokeStyle = p.outline; ctx.lineWidth = Math.max(1.5, line * .35);
-  ctx.beginPath(); ctx.roundRect(4, -54, 10, 13, 2); ctx.fill(); ctx.stroke(); ctx.restore();
+  ctx.beginPath(); ctx.roundRect(-8, 17, 10, 13, 2); ctx.fill(); ctx.stroke(); ctx.restore();
 }
 
 /** Striped-sock leg + oversized sneaker, stepping from the walk phase. */
@@ -570,7 +580,7 @@ export function drawGhost(
     drawCostume(ctx, pose, opts.costume, p, line);
     ctx.save(); ctx.translate(pose.lean * 1.4, pose.bobY);
     ctx.scale(pose.scaleX, pose.scaleY);
-    drawStains(ctx, opts.stains, p, line);
+    drawStains(ctx, opts.stains, p, line, pose.walk);
     drawBagStrap(ctx, p, line, pose.bagSwing, candy);
     drawBag(ctx, candy, p, line, pose.bagSwing);
     ctx.restore(); ctx.restore();
@@ -693,7 +703,7 @@ export function drawGhost(
   ctx.restore();
 
   // persistent mess from unblocked junk / pumpkins
-  drawStains(ctx, opts.stains, p, line);
+  drawStains(ctx, opts.stains.filter((s) => s.y >= -25), p, line, pose.walk);
   ctx.restore();
 
   // Stray hair and skin reveal a real little kid beneath cut-out eye holes.
@@ -780,6 +790,13 @@ export function drawGhost(
   }
 
   drawMouth(ctx, pose, p, line);
+  // Forehead and cheek mess is painted after facial features so it remains visible.
+  ctx.save();
+  ctx.translate(pose.lean * 1.4, pose.bobY - pose.hemBounce * 1.2);
+  ctx.rotate((pose.rotation * Math.PI) / 180);
+  ctx.scale(pose.scaleX, pose.scaleY);
+  drawStains(ctx, opts.stains.filter((s) => s.y < -25), p, line, pose.walk);
+  ctx.restore();
 
   // sweat drop for guilty moments
   if (pose.sweat > 0.08) {
