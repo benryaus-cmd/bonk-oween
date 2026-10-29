@@ -36,7 +36,7 @@ const CaptionLayer = ({ caption, duration, intensity, accent }: CaptionLayerProp
     tl.fromTo(
       node,
       { scale: 0.6 + 0.2 * intensity, opacity: 0, rotate: -5 - intensity * 4 },
-      { scale: 1, opacity: 1, rotate: -2, duration: 0.24, ease: 'back.out(3)' },
+      { scale: 1, opacity: 0.5, rotate: -2, duration: 0.24, ease: 'back.out(3)' },
     ).to(node, { opacity: 0, y: -14, duration: 0.32, ease: 'power2.in' }, Math.max(0.35, duration));
     return () => {
       tl.kill();

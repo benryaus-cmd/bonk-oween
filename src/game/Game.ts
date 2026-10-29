@@ -7,7 +7,7 @@ import { loadBestScore, saveBestScore } from '@/config/storage';
 import { isRankedConfig } from '@/game/eligibility';
 import { PhysicsWorld } from '@/game/PhysicsWorld';
 import { clamp } from '@/game/rng';
-import { applyScore, bagMultiplier, babyPenalty, pointsForHit } from '@/game/Scoring';
+import { applyScore, bagMultiplier, babyPenalty, finalTally, pointsForHit, type FinalTally } from '@/game/Scoring';
 import { SpawnDirector } from '@/game/SpawnDirector';
 import { hitWindows, MISS_LINGER_MS, targetVisual } from '@/game/targetMath';
 import type {
@@ -97,6 +97,8 @@ export class Game {
   private babyDodgeIndex = 0;
   private demoCueSide: Side | null = null;
   private demoCueUntil = 0;
+  private demoBabyPunchlineAt = -1;
+  private tally: FinalTally | null = null;
   /** Latched at round start; sticky once any non-ranked tweak is used. */
   private runEligible = true;
   private cfgRanked = true;
@@ -108,6 +110,7 @@ export class Game {
     this.palette = buildPalette(this.cfg);
     this.physics = new PhysicsWorld(this.cfg);
     this.effects.setConfig(this.cfg);
+    this.effects.setCenterX(layout.centerX);
     this.motion.applyConfig(this.cfg);
     this.resetRound();
   }
@@ -131,6 +134,7 @@ export class Game {
 
   setLayout(layout: WorldLayout): void {
     this.layout = layout;
+    this.effects.setCenterX(layout.centerX);
   }
 
   resetRound(): void {
@@ -162,6 +166,8 @@ export class Game {
     this.babyDodgeIndex = 0;
     this.demoCueSide = null;
     this.demoCueUntil = 0;
+    this.demoBabyPunchlineAt = -1;
+    this.tally = null;
     this.cfgRanked = isRankedConfig(this.cfg);
     this.runEligible = this.cfgRanked;
     this.runId = `run-${Date.now().toString(36)}-${Math.floor(Math.random() * 1679616).toString(36)}`;
@@ -193,7 +199,10 @@ export class Game {
     for (const t of this.targets) {
       if (t.resolved || t.side !== side) continue;
       const d = now - t.impactTime;
-      if (Math.abs(d) <= window.normal && Math.abs(d) < Math.abs(bestDelta)) {
+      const punchable = t.category === 'baby'
+        ? now >= t.spawnTime + 100 && d <= window.normal
+        : d >= -window.early && d <= window.normal;
+      if (punchable && Math.abs(d) < Math.abs(bestDelta)) {
         best = t;
         bestDelta = d;
       }
@@ -259,7 +268,13 @@ export class Game {
     if (this.phase === 'READY' || this.phase === 'PLAYING') {
       this.advanceTargets();
       this.steerCharacter();
-      if (this.phase === 'READY') this.advanceDemo();
+      if (this.phase === 'READY') {
+        this.advanceDemo();
+        if (this.demoBabyPunchlineAt >= 0 && this.clockMs >= this.demoBabyPunchlineAt) {
+          this.events.push({ type: 'CAPTION', text: 'WHY IS SOMEONE THROWING BABIES?!', tone: 'mistake' });
+          this.demoBabyPunchlineAt = -1;
+        }
+      }
     }
   }
 
@@ -321,6 +336,8 @@ export class Game {
     return this.phase === 'READY' && this.clockMs < this.demoCueUntil ? this.demoCueSide : null;
   }
 
+  get resultTally(): FinalTally | null { return this.tally; }
+
   get meltdownAmount(): number {
     const meltdownAt = this.cfg.meltdownStartTime * 1000;
     if (this.roundMs < meltdownAt) return 0;
@@ -342,6 +359,7 @@ export class Game {
     this.spill = [];
     this.demoCueSide = null;
     this.demoCueUntil = 0;
+    this.demoBabyPunchlineAt = -1;
     this.stats = { hits: 0, perfects: 0, misses: 0, babyHits: 0, pumpkins: 0 };
     this.meltdownFired = false;
     this.newRecord = false;
@@ -356,6 +374,12 @@ export class Game {
     this.phase = 'RESULTS';
     this.targets = [];
     this.motion.setExhausted(true);
+    this.tally = finalTally(this.score, {
+      candy: this.candyCount, perfects: this.stats.perfects, pumpkins: this.stats.pumpkins,
+      stains: this.stainsList.length, babyHits: this.stats.babyHits, hits: this.stats.hits,
+    }, this.cfg);
+    this.score = this.tally.total;
+    this.newRecord = this.runEligible && this.score > this.best;
     if (this.runEligible && this.score > this.best) {
       this.best = this.score;
       saveBestScore(this.best);
@@ -430,7 +454,13 @@ export class Game {
       { lastImpact: { left: this.lastImpact('left'), right: this.lastImpact('right') }, pending },
       (req) => {
         this.emitted[req.side] = Math.max(this.emitted[req.side], req.impactTime);
-        if (req.category === 'baby' && this.phase === 'PLAYING') this.events.push({ type: 'BABY_INCOMING' });
+        if (req.category === 'baby') {
+          if (this.phase === 'PLAYING') this.events.push({ type: 'BABY_INCOMING' });
+          else {
+            this.events.push({ type: 'CAPTION', text: 'DO NOT HIT THE BABY', tone: 'mistake' });
+            this.demoBabyPunchlineAt = now + 650;
+          }
+        }
         this.targets.push({
           ...req,
           id: this.nextId++,
@@ -470,7 +500,17 @@ export class Game {
       x: (visual.x - this.layout.centerX) / this.layout.charScale,
       y: (visual.y - this.layout.centerY) / this.layout.charScale,
     });
-    this.effects.burst(visual.x, visual.y, ['#FFFDD0', '#FFCF73'], 4, 1.6, { shapes: ['spark'] });
+    if (target.category === 'junk' || target.category === 'pumpkin') {
+      this.physics.launch(target.art, visual.x, visual.y,
+        target.side === 'left' ? -1 : 1, target.size, this.cfg, target.category === 'pumpkin' ? 1.2 : 1);
+      this.effects.ring(visual.x, visual.y, target.category === 'pumpkin' ? '#FFD700' : '#FFFDD0');
+      this.effects.burst(visual.x, visual.y, target.category === 'pumpkin' ? ['#FF7518', '#FFB347'] : ['#FFFDD0', '#FFCF73'],
+        7, 2, { shapes: ['spark', 'sliver'] });
+    } else {
+      this.effects.arcTo(visual.x, visual.y, this.layout.centerX + 34 * this.layout.charScale,
+        this.layout.centerY + 30 * this.layout.charScale, '#FF9EC4', 5);
+      this.effects.burst(visual.x, visual.y, ['#FFFDD0', '#FFCF73'], 4, 1.6, { shapes: ['spark'] });
+    }
   }
 
   private addStain(kind: StainKind, worldX: number, worldY: number): void {
@@ -518,6 +558,28 @@ export class Game {
         vy: -(3 + Math.random() * 5),
       });
     }
+  }
+
+  private throwBabyBarrage(): void {
+    const now = this.clockMs;
+    const leftArt = Math.random() < 0.5 ? 'egg' : 'tpRoll';
+    this.director.deferUntil(now + 1480);
+    (['left', 'right'] as const).forEach((side, index) => {
+      const dir = side === 'left' ? -1 : 1;
+      const impactTime = now + 950 + index * 220;
+      this.emitted[side] = Math.max(this.emitted[side], impactTime);
+      this.targets.push({
+        id: this.nextId++, kind: 'normal', category: 'junk',
+        art: index === 0 ? leftArt : leftArt === 'egg' ? 'tpRoll' : 'egg',
+        side, spawnTime: now + 140 + index * 220, impactTime,
+        startX: side === 'left' ? -84 : this.layout.width + 84,
+        startY: this.layout.centerY - 85 + index * 125,
+        endX: this.layout.centerX + dir * 118 * this.layout.charScale,
+        endY: this.layout.centerY - 25 + index * 40,
+        spin: dir * 0.85, size: 56 * this.layout.charScale,
+        resolved: false, outcome: null, resolvedAt: 0,
+      });
+    });
   }
 
   /** An object reached the ghost without being intercepted. */
@@ -593,6 +655,7 @@ export class Game {
       this.motion.slap(side, 'whiff', contact);
       this.motion.react('disgust');
       this.stats.babyHits += 1;
+      this.throwBabyBarrage();
       this.effects.burst(visual.x, visual.y, ['#FFFFFF', '#FFE9DC', '#FFFDD0'], 12, 2.4, {
         shapes: ['dot'],
       });

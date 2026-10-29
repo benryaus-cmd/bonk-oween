@@ -32,6 +32,7 @@ interface Ring {
 
 interface Floater {
   x: number;
+  originX: number;
   y: number;
   vy: number;
   life: number;
@@ -80,6 +81,9 @@ export class Effects {
   private flashColor = '#FFFFFF';
   private shakeAmp = 0;
   private pulseAmount = 0;
+  private centerX = 200;
+
+  setCenterX(x: number): void { this.centerX = x; }
 
   setConfig(cfg: GameConfig): void {
     this.cfg = cfg;
@@ -152,6 +156,7 @@ export class Effects {
     if (this.floaters.length >= MAX_FLOATERS) this.floaters.shift();
     this.floaters.push({
       x,
+      originX: x,
       y,
       vy: -0.6,
       life: 0,
@@ -219,6 +224,9 @@ export class Effects {
       }
       t.y += t.vy * f;
       t.vy *= 0.985;
+      const k = t.life / t.ttl;
+      const towardCenter = Math.max(-25, Math.min(25, this.centerX - t.originX));
+      t.x = t.originX + towardCenter * k + Math.sin(k * Math.PI * 5) * 4 * (1 - k);
     }
     for (let i = this.arcs.length - 1; i >= 0; i -= 1) {
       const a = this.arcs[i];
@@ -356,13 +364,17 @@ export class Effects {
       const k = t.life / t.ttl;
       const a = k < 0.12 ? k / 0.12 : 1 - Math.max(0, (k - 0.62) / 0.38);
       const pop = k < 0.14 ? 0.62 + (k / 0.14) * 0.5 : 1.12 - (k - 0.14) * 0.1;
-      ctx.globalAlpha = Math.max(0, Math.min(1, a));
+      ctx.globalAlpha = Math.max(0, Math.min(0.5, a * 0.5));
+      ctx.save();
+      ctx.translate(t.x, t.y);
+      ctx.rotate(Math.sin(k * Math.PI * 6) * 0.075 * (1 - k));
       ctx.font = FONT.replace('%s', String(Math.round(t.size * pop)));
       ctx.lineWidth = 7;
       ctx.strokeStyle = 'rgba(20,4,38,0.9)';
-      ctx.strokeText(t.text, t.x, t.y);
+      ctx.strokeText(t.text, 0, 0);
       ctx.fillStyle = t.color;
-      ctx.fillText(t.text, t.x, t.y);
+      ctx.fillText(t.text, 0, 0);
+      ctx.restore();
     }
     ctx.globalAlpha = 1;
     ctx.textAlign = 'left';

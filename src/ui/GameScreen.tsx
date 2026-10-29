@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { reportScore } from '@aippy/runtime/leaderboard';
 import { Renderer } from '@/art/Renderer';
 import { preloadGameAssets } from '@/audio/AssetPreload';
@@ -7,7 +7,7 @@ import { useGameAudio } from '@/hooks/useGameAudio';
 import { useGameLoop, type GameLoopContext } from '@/hooks/useGameLoop';
 import { isRankedConfig } from '@/game/eligibility';
 import { computeLayout, Game } from '@/game/Game';
-import { sendScorePlaceholder } from '@/game/scoreSend';
+import { sendScorePlaceholder, type ScoreSendPayload } from '@/game/scoreSend';
 import CaptionLayer, { type CaptionEntry } from '@/ui/CaptionLayer';
 import GameHUD from '@/ui/GameHUD';
 import GhostPortrait from '@/ui/GhostPortrait';
@@ -40,6 +40,7 @@ const GameScreen = ({
   const configRef = useRef(config);
   const lastTick = useRef(-1);
   const captionSeq = useRef(0);
+  const pendingScoreRef = useRef<ScoreSendPayload | null>(null);
   const [size, setSize] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -90,6 +91,16 @@ const GameScreen = ({
     ],
   );
   const audio = useGameAudio(audioSettings);
+  const onTallyStep = useCallback((amount: number) => {
+    audio.playSfx(amount < 0 ? 'comboBreak' : 'comboUp', 0.5);
+  }, [audio]);
+  const submitFinishedTally = useCallback(() => {
+    const payload = pendingScoreRef.current;
+    if (!payload) return;
+    pendingScoreRef.current = null; // guard animation completion and Replay racing
+    sendScorePlaceholder(payload);
+    if (payload.eligible) reportScore(payload.score);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -199,9 +210,8 @@ const GameScreen = ({
           haptic('mistake', cfg.hapticsEnabled, cfg.hapticIntensity);
           break;
         case 'RUN_FINISHED':
-          // Ranked leaderboard: eligible (default-settings) runs only.
-          if (ev.eligible) reportScore(ev.score);
-          sendScorePlaceholder({
+          // Hold the final score until the visible tally has counted up.
+          pendingScoreRef.current = {
             runId: ev.runId,
             score: ev.score,
             candy: ev.candy,
@@ -215,7 +225,7 @@ const GameScreen = ({
             eligible: ev.eligible,
             submitted: ev.eligible,
             completedAt: new Date().toISOString(),
-          });
+          };
           audio.playSfx('scoreReveal');
           audio.stopMusic();
           break;
@@ -318,6 +328,7 @@ const GameScreen = ({
   };
 
   const handleReplay = () => {
+    submitFinishedTally(); // Replay fast-forwards the tally, then sends once.
     const game = gameRef.current;
     audio.playSfx('uiRestart');
     game?.resetRound();
@@ -381,6 +392,7 @@ const GameScreen = ({
         practice={hud.practice}
         muted={muted}
         hidden={hud.phase === 'RESULTS' || settingsOpen}
+        showMultiplier={hud.phase === 'PLAYING' || hud.phase === 'FINISHING'}
         textColor={config.uiText}
         accent={config.accentColour}
         hudScale={config.hudScale}
@@ -425,6 +437,10 @@ const GameScreen = ({
       {hud.phase === 'RESULTS' && (
         <ResultsScreen
           score={hud.score}
+          tally={gameRef.current?.resultTally ?? {
+            streetScore: hud.score, total: hud.score, lines: [],
+            award: { title: 'STREET LEGEND', joke: 'According to exactly one person.', icon: 'ghost', color: '#B9A8FF' },
+          }}
           best={hud.best}
           candy={hud.candy}
           maxCandy={hud.maxCandy}
@@ -441,6 +457,8 @@ const GameScreen = ({
           speed={config.resultAnimationSpeed}
           buttonScale={config.buttonScale}
           onReplay={handleReplay}
+          onTallyStep={onTallyStep}
+          onTallyComplete={submitFinishedTally}
         />
       )}
 

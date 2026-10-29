@@ -1,6 +1,6 @@
 /**
  * Per-run score send integration placeholder. Called exactly once per
- * RUN_FINISHED event (including zero-score runs and every replay).
+ * completed results tally (including zero-score runs and every replay).
  * Practice runs are logged for diagnostics but never masquerade as a
  * real ranked submission.
  */

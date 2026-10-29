@@ -14,9 +14,9 @@ const FADE_IN_MS = 140;
 export const MISS_LINGER_MS = 50;
 
 /** The ring, tap check, miss check and travel all share these actual windows. */
-export function hitWindows(normalMs: number, perfectMs: number): { normal: number; perfect: number } {
+export function hitWindows(normalMs: number, perfectMs: number): { normal: number; early: number; perfect: number } {
   const normal = normalMs * 1.1;
-  return { normal, perfect: Math.min(normal - 10, perfectMs * 0.82) };
+  return { normal, early: normal * 1.1, perfect: Math.min(normal - 10, perfectMs * 0.82) };
 }
 
 /** Position of a scripted target at a given active-round clock value. */

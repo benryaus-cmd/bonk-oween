@@ -13,6 +13,7 @@ interface GameHUDProps {
   practice: boolean;
   muted: boolean;
   hidden: boolean;
+  showMultiplier: boolean;
   textColor: string;
   accent: string;
   hudScale: number;
@@ -35,6 +36,7 @@ const GameHUD = ({
   practice,
   muted,
   hidden,
+  showMultiplier,
   textColor,
   accent,
   hudScale,
@@ -49,6 +51,7 @@ const GameHUD = ({
   const scoreRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<HTMLDivElement>(null);
   const bagRef = useRef<HTMLDivElement>(null);
+  const multiplierRef = useRef<HTMLDivElement>(null);
   const lastCandy = useRef(0);
   const seconds = Math.max(0, Math.ceil(timeLeft));
 
@@ -77,6 +80,7 @@ const GameHUD = ({
     const node = bagRef.current;
     if (!node || candy < 1) return;
     if (candy === lastCandy.current) return;
+    const grew = candy > lastCandy.current;
     lastCandy.current = candy;
     gsap.killTweensOf(node);
     gsap.fromTo(
@@ -84,6 +88,12 @@ const GameHUD = ({
       { scale: 1 + 0.3 * motionIntensity, rotate: candy >= 10 ? -5 : 4 },
       { scale: 1, rotate: 0, duration: 0.34, ease: 'back.out(4)' },
     );
+    const badge = multiplierRef.current;
+    if (badge) {
+      gsap.killTweensOf(badge);
+      gsap.fromTo(badge, { scale: grew ? 1.26 : 0.86, rotate: grew ? 4 : -4 },
+        { scale: 1, rotate: 0, duration: 0.42, ease: 'back.out(3)' });
+    }
   }, [candy, motionIntensity]);
 
   return (
@@ -181,6 +191,17 @@ const GameHUD = ({
         <div className="absolute inset-x-0 top-[62px] flex justify-center">
           <div className="rounded-full border border-[#FF9A3C]/60 bg-black/55 px-2.5 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-[#FF9A3C]">
             Practice · not submitted
+          </div>
+        </div>
+      )}
+
+      {showMultiplier && !hidden && (
+        <div className="absolute inset-x-0 bottom-[14%] flex justify-center">
+          <div ref={multiplierRef} className="rounded-2xl border-2 border-[#FFD700]/70 bg-[#240A42]/85 px-4 py-1.5 text-center shadow-[0_4px_0_#170528,0_0_18px_#FFD70044]">
+            <div className="text-[8px] font-black uppercase leading-none tracking-[0.2em] text-[#FF9EC4]">{candy} candy in bag</div>
+            <div className="text-[19px] font-black leading-none tabular-nums text-[#FFD700]" style={{ textShadow: '0 2px 0 #2E0854' }}>
+              ×{multiplier.toFixed(2)}
+            </div>
           </div>
         </div>
       )}

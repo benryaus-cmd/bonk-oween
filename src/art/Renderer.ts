@@ -95,7 +95,7 @@ export class Renderer {
       });
 
       const radius = objectVisualRadius(t2.art) * (t2.size / 60) * v.scale;
-      if (t2.category === 'baby') {
+      if (t2.category === 'baby' && scene.clockMs >= t2.spawnTime + 100 && !t2.resolved) {
         // Unmistakable DO-NOT-BONK treatment, clearly not the gold reward.
         ctx.globalAlpha = v.alpha * (0.5 + 0.3 * Math.sin(scene.clockMs / 150));
         ctx.strokeStyle = p.cursed;
@@ -116,8 +116,8 @@ export class Renderer {
       } else if (!t2.resolved) {
         // Approach cue: the ring tightens and turns gold at the slap moment.
         const delta = t2.impactTime - scene.clockMs;
-        const span = windows.normal;
-        if (Math.abs(delta) <= span) {
+        const span = delta >= 0 ? windows.early : windows.normal;
+        if (delta <= windows.early && delta >= -windows.normal) {
           const closeness = 1 - Math.min(1, Math.abs(delta) / span);
           const urgency = Math.max(0, Math.min(1, v.urgency));
           const throb = urgency * (0.5 + 0.5 * Math.sin(scene.clockMs / 72));

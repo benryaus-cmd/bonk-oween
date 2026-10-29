@@ -45,6 +45,7 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
   const musicPlayingRef = useRef(false);
   const musicModeRef = useRef<MusicMode>('off');
   const loopersRef = useRef({ menu: new CrossfadeMusic(), game: new CrossfadeMusic() });
+  const recordedBuffersRef = useRef(new Map<string, AudioBuffer>());
   const lastRecordedRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
@@ -124,12 +125,33 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
           const now = performance.now();
           if (now - (lastRecordedRef.current[name] ?? -Infinity) < def.cooldown) return;
           lastRecordedRef.current[name] = now;
-          const boost = name === 'babyHitExtra' || name === 'perfectExtra' ? 2 : 1;
-          const volume = Math.max(0, Math.min(1, gain * def.defaultGain * s.master * s.sfx * boost));
+          const boosted = name === 'babyHitExtra' || name === 'perfectExtra';
+          const volume = Math.max(0, Math.min(boosted ? 1.6 : 1,
+            gain * def.defaultGain * s.master * s.sfx * (boosted ? 3 : 1)));
           if (volume <= 0.002) return;
           void ensure().then(async () => {
             try {
-              const handle = await play(name, { volume });
+              if (boosted) {
+                const ctx = getAudioContext();
+                const url = name === 'babyHitExtra' ? BABY_HIT_EXTRA_URL : PERFECT_EXTRA_URL;
+                const bytes = cachedAudio(url);
+                if (ctx && bytes) {
+                  let buffer = recordedBuffersRef.current.get(url);
+                  if (!buffer) {
+                    buffer = await ctx.decodeAudioData(bytes.slice(0));
+                    recordedBuffersRef.current.set(url, buffer);
+                  }
+                  const source = ctx.createBufferSource();
+                  const level = ctx.createGain();
+                  source.buffer = buffer;
+                  level.gain.value = volume; // WebAudio allows the requested gain above 1.
+                  source.connect(level); level.connect(ctx.destination);
+                  source.onended = () => { source.disconnect(); level.disconnect(); };
+                  source.start();
+                  return;
+                }
+              }
+              const handle = await play(name, { volume: Math.min(1, volume) });
               if (handle) return;
             } catch {
               // A blocked CDN or decode failure should not interrupt a run.

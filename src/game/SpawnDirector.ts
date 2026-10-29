@@ -61,6 +61,11 @@ export class SpawnDirector {
     this.queuedBaby = null;
   }
 
+  /** Let a scripted consequence have the road to itself for a moment. */
+  deferUntil(timeMs: number): void {
+    this.nextSpawnTime = Math.max(this.nextSpawnTime, timeMs);
+  }
+
   /** Shift the whole pending schedule when the warm-up clock is rebased. */
   shift(offsetMs: number): void {
     this.nextSpawnTime -= offsetMs;
@@ -80,9 +85,14 @@ export class SpawnDirector {
     emit: (req: SpawnRequest) => void,
   ): void {
     if (this.queuedBaby) {
-      if (this.queuedBaby.spawnTime > nowMs || state.pending >= cfg.maxIncomingTargets) return;
+      // The warning must not share a lane with a lingering sweet or egg.
+      // Pause ordinary spawns until the road clears, then give the baby a
+      // full new flight from offscreen.
+      if (this.queuedBaby.spawnTime > nowMs || state.pending > 0) return;
       const baby = this.queuedBaby;
       this.queuedBaby = null;
+      baby.impactTime += Math.max(0, nowMs - baby.spawnTime);
+      baby.spawnTime = nowMs;
       this.lastBabyImpact = baby.impactTime;
       this.lastAnyImpact = baby.impactTime;
       state.lastImpact[baby.side] = baby.impactTime;
@@ -128,8 +138,8 @@ export class SpawnDirector {
       this.sameSideStreak = this.lastSide === side ? this.sameSideStreak + 1 : 1;
       this.lastSide = side;
       const request = this.build(spawnAt, impactTime, side, layout, cfg, meltdown);
-      if (request.category === 'baby' && impactTime - this.lastAnyImpact < babyClearance) {
-        const delay = babyClearance - (impactTime - this.lastAnyImpact);
+      if (request.category === 'baby' && (impactTime - this.lastAnyImpact < babyClearance || state.pending > 0)) {
+        const delay = Math.max(0, babyClearance - (impactTime - this.lastAnyImpact));
         request.spawnTime += delay;
         request.impactTime += delay;
         this.queuedBaby = request;
