@@ -121,3 +121,17 @@
 .bonk-pulse {
   animation: bonk-pulse 0.9s ease-in-out infinite;
 }
+
+@keyframes bonk-award-in {
+  0% { opacity: 0; transform: scale(0.58) rotate(-13deg); }
+  65% { opacity: 1; transform: scale(1.07) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+.bonk-award-reveal { animation: bonk-award-in 230ms ease-out both; }
+.bonk-record-sticker { animation: bonk-award-in 430ms ease-out both; }
+@keyframes bonk-score-spark {
+  0% { opacity: 0; transform: translateY(9px) scale(.5) rotate(-30deg); }
+  35% { opacity: 1; transform: translateY(-4px) scale(1.1) rotate(10deg); }
+  100% { opacity: 0; transform: translateY(-22px) scale(.8) rotate(35deg); }
+}
+.bonk-score-spark { animation: bonk-score-spark 650ms ease-out both; }

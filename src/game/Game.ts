@@ -352,6 +352,7 @@ export class Game {
     this.emitted = { left: 0, right: 0 };
     this.clockMs = 0;
     this.roundMs = 0;
+    this.director.deferUntil(500); // Let the first tap breathe before the street starts throwing.
     this.score = 0;
     this.candyCount = 0;
     this.maxCandy = 0;

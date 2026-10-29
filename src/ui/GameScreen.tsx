@@ -8,6 +8,8 @@ import { useGameLoop, type GameLoopContext } from '@/hooks/useGameLoop';
 import { isRankedConfig } from '@/game/eligibility';
 import { computeLayout, Game } from '@/game/Game';
 import { sendScorePlaceholder, type ScoreSendPayload } from '@/game/scoreSend';
+import { loadEarnedAwards, rememberAward } from '@/game/awardCollection';
+import { AWARDS } from '@/game/Scoring';
 import CaptionLayer, { type CaptionEntry } from '@/ui/CaptionLayer';
 import GameHUD from '@/ui/GameHUD';
 import GhostPortrait from '@/ui/GhostPortrait';
@@ -47,6 +49,7 @@ const GameScreen = ({
   const [caption, setCaption] = useState<CaptionEntry | null>(null);
   const [assets, setAssets] = useState({ ready: false, complete: 0, total: 1, failures: 0 });
   const [entered, setEntered] = useState(false);
+  const [earnedAwards, setEarnedAwards] = useState(loadEarnedAwards);
   const [hud, setHud] = useState<HudSnapshot>({
     phase: 'READY',
     score: 0,
@@ -226,6 +229,9 @@ const GameScreen = ({
             submitted: ev.eligible,
             completedAt: new Date().toISOString(),
           };
+          if (gameRef.current?.resultTally) {
+            setEarnedAwards(rememberAward(gameRef.current.resultTally.award.title));
+          }
           audio.playSfx('scoreReveal');
           audio.stopMusic();
           break;
@@ -416,6 +422,21 @@ const GameScreen = ({
       />
 
       {hud.phase === 'READY' && !settingsOpen && (
+        <div className="pointer-events-none absolute inset-x-3 top-[14%] z-20 rounded-2xl border border-[#C38BFF]/40 bg-[#190A2D]/75 px-2 py-2 shadow-lg">
+          <div className="mb-1 text-center text-[9px] font-black uppercase tracking-[0.18em] text-[#FFE099]">Street stickers · {earnedAwards.length}/{AWARDS.length}</div>
+          <div className="grid grid-cols-4 gap-1">
+            {AWARDS.map((award) => {
+              const earned = earnedAwards.includes(award.title);
+              return <div key={award.title} className="flex min-h-9 items-center justify-center rounded-lg border px-0.5 text-center text-[8px] font-black uppercase leading-[10px]"
+                style={{ background: earned ? award.color : '#36313D', borderColor: earned ? '#2E0854' : '#5D5862', color: earned ? '#2E0854' : '#89828F', boxShadow: earned ? '0 2px 0 #170528' : undefined }}>
+                {award.title}
+              </div>;
+            })}
+          </div>
+        </div>
+      )}
+
+      {hud.phase === 'READY' && !settingsOpen && (
         <div className="pointer-events-none absolute inset-x-0 bottom-[7%] z-20 flex flex-col items-center gap-1">
           <div className="bonk-pulse rounded-full bg-black/50 px-4 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#FFFDD0]">
             Tap to start
@@ -439,7 +460,7 @@ const GameScreen = ({
           score={hud.score}
           tally={gameRef.current?.resultTally ?? {
             streetScore: hud.score, total: hud.score, lines: [],
-            award: { title: 'STREET LEGEND', joke: 'According to exactly one person.', icon: 'ghost', color: '#B9A8FF' },
+            award: AWARDS[6],
           }}
           best={hud.best}
           candy={hud.candy}

@@ -4,7 +4,7 @@ import type { RunAward } from '@/game/Scoring';
 const AwardSticker = ({ award }: { award: RunAward }) => {
   const ink = '#2E0854';
   return (
-    <div className="absolute left-1 top-2 z-10 flex w-[106px] -rotate-[9deg] flex-col items-center rounded-xl border-[3px] px-1.5 py-1 text-center shadow-[2px_5px_0_#170528]"
+    <div className="flex w-[106px] -rotate-[9deg] flex-col items-center rounded-xl border-[3px] px-1.5 py-1 text-center shadow-[2px_5px_0_#170528]"
       style={{ background: award.color, borderColor: ink, color: ink }}>
       <svg width="34" height="30" viewBox="0 0 40 36" fill="none" stroke={ink} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         {award.icon === 'cuffs' && <><circle cx="10" cy="18" r="7"/><circle cx="30" cy="18" r="7"/><path d="M16 16l8 4M7 11l-2-4m28 4 2-4"/></>}

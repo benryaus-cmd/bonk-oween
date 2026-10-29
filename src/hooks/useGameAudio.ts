@@ -52,8 +52,8 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
     settingsRef.current = settings;
     managerRef.current?.setVolumes(settings.master, settings.sfx, settings.muted);
     const volume = settings.muted || !settings.musicEnabled ? 0 : settings.master * settings.music;
-    loopersRef.current.menu.setVolume(volume);
-    loopersRef.current.game.setVolume(volume);
+    loopersRef.current.menu.setVolume(volume * 0.9);
+    loopersRef.current.game.setVolume(volume * 0.9);
   }, [settings]);
 
   useEffect(
@@ -98,6 +98,7 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
         return;
       }
       const track = mode === 'menu' ? 'menu' : 'game';
+      const trackVolume = volume * 0.9;
       loopersRef.current.menu.stop();
       loopersRef.current.game.stop();
       stop('bgm'); stop('menuBgm');
@@ -106,12 +107,12 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
         if (musicModeRef.current !== mode) return;
         const ctx = getAudioContext();
         const bytes = cachedAudio(track === 'menu' ? MENU_MUSIC_URL : MUSIC_URL);
-        if (ctx && bytes && await loopersRef.current[track].start(ctx, bytes, volume)) {
+        if (ctx && bytes && await loopersRef.current[track].start(ctx, bytes, trackVolume)) {
           musicPlayingRef.current = true;
           return;
         }
         if (musicModeRef.current !== mode) return;
-        const handle = await play(track === 'menu' ? 'menuBgm' : 'bgm', { loop: true, volume });
+        const handle = await play(track === 'menu' ? 'menuBgm' : 'bgm', { loop: true, volume: trackVolume });
         musicPlayingRef.current = Boolean(handle);
       }).catch(() => { musicPlayingRef.current = false; });
     };
@@ -126,8 +127,8 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
           if (now - (lastRecordedRef.current[name] ?? -Infinity) < def.cooldown) return;
           lastRecordedRef.current[name] = now;
           const boosted = name === 'babyHitExtra' || name === 'perfectExtra';
-          const volume = Math.max(0, Math.min(boosted ? 1.6 : 1,
-            gain * def.defaultGain * s.master * s.sfx * (boosted ? 3 : 1)));
+          const volume = Math.max(0, Math.min(boosted ? 2 : 1,
+            gain * def.defaultGain * s.master * s.sfx * (boosted ? 3.75 : 1)));
           if (volume <= 0.002) return;
           void ensure().then(async () => {
             try {

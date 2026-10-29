@@ -44,9 +44,20 @@ export interface ScoreLine {
 export interface RunAward {
   title: string;
   joke: string;
+  reason: string;
   icon: 'cuffs' | 'candy' | 'star' | 'pumpkin' | 'stain' | 'ghost';
   color: string;
 }
+
+export const AWARDS: readonly RunAward[] = [
+  { title: 'HANDCUFFS', joke: 'The babies have filed a report.', reason: 'Punched at least 2 babies in one run. The street has questions.', icon: 'cuffs', color: '#FF8FA3' },
+  { title: 'SWEET TOOTH', joke: 'Dentists hate this one weird bag.', reason: 'Finished a run with at least 8 candies still in the bag.', icon: 'candy', color: '#FF9EC4' },
+  { title: 'GOLDEN HANDS', joke: 'Those palms need a license.', reason: 'Landed at least 12 perfect hits in one run.', icon: 'star', color: '#FFD700' },
+  { title: 'PUMPKIN MENACE', joke: 'The porch is pressing charges.', reason: 'Smashed at least 3 pumpkins in one run.', icon: 'pumpkin', color: '#FF9A3C' },
+  { title: 'LAUNDRY CRIME', joke: 'That sheet has seen things.', reason: 'Finished a run with at least 5 stains on your costume.', icon: 'stain', color: '#C8B4FF' },
+  { title: 'CLEAN GETAWAY', joke: 'Mum might believe the alibi.', reason: 'Cleared at least 14 objects with zero stains and zero baby punches.', icon: 'ghost', color: '#FFFDD0' },
+  { title: 'STREET LEGEND', joke: 'According to exactly one person.', reason: 'Finished a run. The neighbourhood is still processing it.', icon: 'ghost', color: '#B9A8FF' },
+];
 
 export interface FinalTally {
   streetScore: number;
@@ -69,18 +80,16 @@ export function finalTally(
     { label: 'Laundry bill', count: stats.stains, amount: -stats.stains * Math.round(base * 0.4) },
     { label: 'Baby incident fine', count: stats.babyHits, amount: -stats.babyHits * Math.round(base * 1.5) },
   ];
-  const awards: Array<{ strength: number; award: RunAward }> = [
-    { strength: stats.babyHits / 2, award: { title: 'HANDCUFFS', joke: 'The babies have filed a report.', icon: 'cuffs', color: '#FF8FA3' } },
-    { strength: stats.candy / 10, award: { title: 'SWEET TOOTH', joke: 'Dentists hate this one weird bag.', icon: 'candy', color: '#FF9EC4' } },
-    { strength: stats.perfects / 6, award: { title: 'GOLDEN HANDS', joke: 'Those palms need a license.', icon: 'star', color: '#FFD700' } },
-    { strength: stats.pumpkins / 3, award: { title: 'PUMPKIN MENACE', joke: 'The porch is pressing charges.', icon: 'pumpkin', color: '#FF9A3C' } },
-    { strength: stats.stains / 4, award: { title: 'LAUNDRY CRIME', joke: 'That sheet has seen things.', icon: 'stain', color: '#C8B4FF' } },
-    { strength: stats.stains === 0 && stats.babyHits === 0 ? stats.hits / 10 : 0,
-      award: { title: 'CLEAN GETAWAY', joke: 'Mum might believe the alibi.', icon: 'ghost', color: '#FFFDD0' } },
+  const awards = [
+    { strength: stats.babyHits / 2, award: AWARDS[0] },
+    { strength: stats.candy / 8, award: AWARDS[1] },
+    { strength: stats.perfects / 12, award: AWARDS[2] },
+    { strength: stats.pumpkins / 3, award: AWARDS[3] },
+    { strength: stats.stains / 5, award: AWARDS[4] },
+    { strength: stats.stains === 0 && stats.babyHits === 0 ? stats.hits / 14 : 0, award: AWARDS[5] },
   ];
   const strongest = awards.reduce((best, next) => next.strength > best.strength ? next : best);
-  const award = strongest.strength >= 0.35 ? strongest.award :
-    { title: 'STREET LEGEND', joke: 'According to exactly one person.', icon: 'ghost' as const, color: '#B9A8FF' };
+  const award = strongest.strength >= 1 ? strongest.award : AWARDS[6];
   return {
     streetScore,
     total: applyScore(streetScore, lines.reduce((sum, line) => sum + line.amount, 0)),
