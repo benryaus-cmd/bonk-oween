@@ -14,6 +14,7 @@ interface CaptionLayerProps {
   duration: number;
   intensity: number;
   accent: string;
+  reducedMotion: boolean;
 }
 
 const TONE_COLOR: Record<CaptionTone, string> = {
@@ -26,22 +27,26 @@ const TONE_COLOR: Record<CaptionTone, string> = {
 };
 
 /** One kinetic caption at a time — replaces itself, never stacks. */
-const CaptionLayer = ({ caption, duration, intensity, accent }: CaptionLayerProps) => {
+const CaptionLayer = ({ caption, duration, intensity, accent, reducedMotion }: CaptionLayerProps) => {
   const nodeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const node = nodeRef.current;
     if (!node || !caption) return;
+    if (reducedMotion) {
+      gsap.set(node, { scale: 1, opacity: 1, rotate: 0, y: 0 });
+      return;
+    }
     const tl = gsap.timeline();
     tl.fromTo(
       node,
-      { scale: 0.6 + 0.2 * intensity, opacity: 0, rotate: -5 - intensity * 4 },
-      { scale: 1, opacity: 0.5, rotate: -2, duration: 0.24, ease: 'back.out(3)' },
+      { scale: 0.6 + 0.2 * intensity, opacity: 0, rotate: -5 - intensity * 4, y: 0 },
+      { scale: 1, opacity: 1, rotate: -2, duration: 0.24, ease: 'back.out(3)' },
     ).to(node, { opacity: 0, y: -14, duration: 0.32, ease: 'power2.in' }, Math.max(0.35, duration));
     return () => {
       tl.kill();
     };
-  }, [caption, duration, intensity]);
+  }, [caption, duration, intensity, reducedMotion]);
 
   if (!caption) return null;
   const color = caption.tone === 'hype' ? accent : TONE_COLOR[caption.tone];

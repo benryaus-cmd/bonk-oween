@@ -418,6 +418,7 @@ const GameScreen = ({
         caption={hud.phase === 'PLAYING' || hud.phase === 'READY' ? caption : null}
         duration={config.captionDuration}
         intensity={config.uiAnimationIntensity}
+        reducedMotion={config.reducedMotion}
         accent={config.accentColour}
       />
 

@@ -43,6 +43,8 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
   const settingsRef = useRef<AudioSettings>(settings);
   const musicKeyRef = useRef('');
   const musicPlayingRef = useRef(false);
+  const musicStartingRef = useRef(false);
+  const musicAttemptRef = useRef(0);
   const musicModeRef = useRef<MusicMode>('off');
   const loopersRef = useRef({ menu: new CrossfadeMusic(), game: new CrossfadeMusic() });
   const recordedBuffersRef = useRef(new Map<string, AudioBuffer>());
@@ -60,6 +62,7 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
     () => () => {
       managerRef.current?.dispose();
       managerRef.current = null;
+      musicAttemptRef.current++;
       loopersRef.current.menu.stop();
       loopersRef.current.game.stop();
     },
@@ -85,12 +88,14 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
       const want = mode !== 'off' && !s.muted && s.musicEnabled && volume > 0.002;
       const effectiveMode: MusicMode = want ? mode : 'off';
       const key = `${effectiveMode}:${volume.toFixed(2)}`;
-      const retry = want && !musicPlayingRef.current;
+      const retry = want && !musicPlayingRef.current && !musicStartingRef.current;
       if (!retry && musicKeyRef.current === key) return;
+      const attempt = ++musicAttemptRef.current;
       musicKeyRef.current = key;
       musicModeRef.current = effectiveMode;
       if (!want) {
         musicPlayingRef.current = false;
+        musicStartingRef.current = false;
         stop('bgm');
         stop('menuBgm');
         loopersRef.current.menu.stop();
@@ -103,18 +108,29 @@ export function useGameAudio(settings: AudioSettings): GameAudioApi {
       loopersRef.current.game.stop();
       stop('bgm'); stop('menuBgm');
       musicPlayingRef.current = false;
+      musicStartingRef.current = true;
       void ensure().then(async () => {
-        if (musicModeRef.current !== mode) return;
+        if (attempt !== musicAttemptRef.current || musicModeRef.current !== mode) return;
         const ctx = getAudioContext();
         const bytes = cachedAudio(track === 'menu' ? MENU_MUSIC_URL : MUSIC_URL);
-        if (ctx && bytes && await loopersRef.current[track].start(ctx, bytes, trackVolume)) {
+        const started = ctx && bytes && await loopersRef.current[track].start(ctx, bytes, trackVolume);
+        if (attempt !== musicAttemptRef.current) return;
+        if (started) {
           musicPlayingRef.current = true;
+          musicStartingRef.current = false;
           return;
         }
         if (musicModeRef.current !== mode) return;
         const handle = await play(track === 'menu' ? 'menuBgm' : 'bgm', { loop: true, volume: trackVolume });
+        if (attempt !== musicAttemptRef.current) return;
         musicPlayingRef.current = Boolean(handle);
-      }).catch(() => { musicPlayingRef.current = false; });
+        musicStartingRef.current = false;
+      }).catch(() => {
+        if (attempt === musicAttemptRef.current) {
+          musicPlayingRef.current = false;
+          musicStartingRef.current = false;
+        }
+      });
     };
 
     return {

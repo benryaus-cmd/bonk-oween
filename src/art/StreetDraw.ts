@@ -101,6 +101,30 @@ export class StreetDraw {
     if (key !== this.key || !this.background) { this.build(w, h, cfg); this.key = key; }
     if (this.background) ctx.drawImage(this.background, 0, 0, w, h);
     const phase = timeMs / 1000 * cfg.backgroundAnimationSpeed * (cfg.reducedMotion ? 0.32 : 1) * 0.16;
+    // A little moving air behind the houses adds depth without distracting
+    // from the objects crossing the playfield.
+    ctx.save();
+    ctx.fillStyle = '#C6A8D5';
+    for (let i = 0; i < 3; i++) {
+      const drift = Math.sin(phase * 1.2 + i * 2.4) * w * 0.07;
+      ctx.globalAlpha = 0.035 + i * 0.012;
+      ctx.beginPath();
+      ctx.ellipse(w * (0.16 + i * 0.34) + drift, this.horizon + 15 + i * 13,
+        w * (0.23 + i * 0.035), 9 + i * 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = '#130D23';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 2; i++) {
+      const x = w * (0.24 + i * 0.43) + Math.sin(phase * 0.7 + i * 3) * w * 0.04;
+      const y = this.horizon * (0.28 + i * 0.12) + Math.sin(phase + i) * 3;
+      const wing = Math.sin(timeMs / 280 + i * 2) * 2.2;
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath(); ctx.moveTo(x - 9, y + wing); ctx.quadraticCurveTo(x - 4, y - 4, x, y);
+      ctx.quadraticCurveTo(x + 4, y - 4, x + 9, y + wing); ctx.stroke();
+    }
+    ctx.restore();
     for (let i = 0; i < 10; i++) {
       // The child travels *into* the street: scenery recedes to the vanishing point.
       const depth = (((i / 10 - phase) % 1 + 1) % 1) * 1.5, d = depth * depth;

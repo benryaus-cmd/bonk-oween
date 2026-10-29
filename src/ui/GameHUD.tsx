@@ -66,7 +66,7 @@ const GameHUD = ({
   useEffect(() => {
     const node = timerRef.current;
     if (!node) return;
-    if (timeLeft <= 5.05 && timeLeft > 0) {
+    if (seconds <= 5 && seconds > 0) {
       gsap.killTweensOf(node);
       gsap.fromTo(
         node,
@@ -74,7 +74,7 @@ const GameHUD = ({
         { scale: 1, duration: 0.34, ease: 'power2.out' },
       );
     }
-  }, [seconds, timeLeft, motionIntensity]);
+  }, [seconds, motionIntensity]);
 
   useEffect(() => {
     const node = bagRef.current;
