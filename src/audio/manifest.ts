@@ -1,12 +1,11 @@
-// Keep game audio independent of Aippy's locally managed asset configuration.
-// These literal URLs are also discovered by the existing Aippy preload plugin.
-export const MUSIC_URL = 'https://cdn.freesound.org/previews/865/865678_71257-lq.mp3';
-export const MENU_MUSIC_URL = 'https://cdn.freesound.org/previews/865/865677_71257-lq.mp3';
-export const BABY_INCOMING_URL = 'https://cdn.freesound.org/previews/461/461792_9676877-lq.mp3';
-export const BABY_HIT_URL = 'https://cdn.freesound.org/previews/113/113160_1927446-lq.mp3';
-export const BABY_HIT_EXTRA_URL = 'https://cdn.freesound.org/previews/172/172078_764147-lq.mp3';
-export const PERFECT_EXTRA_URL = 'https://cdn.freesound.org/previews/547/547346_10485775-lq.mp3';
-export const CANDY_POP_URL = 'https://cdn.freesound.org/previews/868/868506_19015218-lq.mp3';
+import assetsData from '@/config/assets';
+export const MUSIC_URL = assetsData.AUDIO_BGM;
+export const MENU_MUSIC_URL = assetsData.AUDIO_MENU_BGM;
+export const BABY_INCOMING_URL = assetsData.AUDIO_BABY_INCOMING;
+export const BABY_HIT_URL = assetsData.AUDIO_BABY_HIT;
+export const BABY_HIT_EXTRA_URL = assetsData.AUDIO_BABY_HIT_EXTRA;
+export const PERFECT_EXTRA_URL = assetsData.AUDIO_PERFECT_EXTRA;
+export const CANDY_POP_URL = assetsData.AUDIO_CANDY_POP;
 
 export type SfxName =
   | 'slapSoft'
