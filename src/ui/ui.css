@@ -1,0 +1,123 @@
+:root {
+  --bonk-outline: #2e0854;
+  --bonk-mint: #98ff98;
+  --bonk-cream: #fffdd0;
+  --bonk-coral: #ff7f50;
+  --bonk-gold: #ffd700;
+  --bonk-ink: #170528;
+}
+
+.bonk-root {
+  font-family: ui-rounded, "SF Pro Rounded", "Trebuchet MS", system-ui, -apple-system, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+.bonk-hud-panel {
+  background: linear-gradient(180deg, rgba(39, 12, 70, 0.82), rgba(24, 6, 44, 0.72));
+  border: 2px solid rgba(46, 8, 84, 0.9);
+  box-shadow: 0 6px 18px rgba(6, 0, 16, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: none;
+}
+
+.bonk-btn {
+  border: 2px solid rgba(46, 8, 84, 0.95);
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.bonk-btn:active {
+  transform: scale(0.93);
+  filter: brightness(1.1);
+}
+
+.bonk-play {
+  background: linear-gradient(180deg, #b6ffb6, #6fe081);
+  box-shadow: 0 7px 0 #2e0854, 0 12px 22px rgba(6, 0, 20, 0.5);
+  transition: transform 110ms ease, box-shadow 110ms ease;
+}
+
+.bonk-play:active {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 #2e0854, 0 6px 12px rgba(6, 0, 20, 0.5);
+}
+
+.bonk-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+}
+
+.bonk-range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(46, 8, 84, 0.8);
+}
+
+.bonk-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--bonk-mint);
+  border: 2px solid var(--bonk-outline);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.bonk-range::-moz-range-track {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.bonk-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bonk-mint);
+  border: 2px solid var(--bonk-outline);
+}
+
+.bonk-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.bonk-tabs {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.bonk-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.bonk-caption {
+  will-change: transform, opacity;
+}
+
+@keyframes bonk-float {
+  0%, 100% { transform: translateY(0); opacity: 0.85; }
+  50% { transform: translateY(-7px); opacity: 1; }
+}
+
+@keyframes bonk-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+
+.bonk-hint {
+  animation: bonk-float 1.6s ease-in-out infinite;
+}
+
+.bonk-pulse {
+  animation: bonk-pulse 0.9s ease-in-out infinite;
+}
